@@ -4,6 +4,7 @@
 import { getYangjuFires } from "../lib/disasters";
 import { getAnalysis } from "../lib/analysis";
 import { getCurrentWind } from "../lib/weather";
+import MyLocation from "./MyLocation";
 
 // 접속할 때마다 재난문자 목록은 새로 확인하기 (AI 분석 결과는 저장된 걸 다시 씀)
 export const dynamic = "force-dynamic";
@@ -47,6 +48,7 @@ export default async function Home() {
       </p>
 
       <Wind wind={wind} />
+      <MyLocation />
 
       {error && <p style={styles.error}>{error}</p>}
 
