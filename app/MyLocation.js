@@ -79,16 +79,16 @@ export default function MyLocation() {
 }
 
 const styles = {
-  box: { border: "1px solid #ccd5df", borderRadius: "8px", padding: "12px 14px", margin: "16px 0" },
+  box: { background: "#000000", color: "#ffffff", borderRadius: "8px", padding: "12px 14px", margin: "16px 0" },
   button: {
     fontSize: "16px", fontWeight: 700, padding: "10px 16px", borderRadius: "8px",
-    border: "none", background: "#1d4ed8", color: "#fff", cursor: "pointer",
+    border: "none", background: "#ffffff", color: "#000000", cursor: "pointer",
   },
   linkButton: {
     marginTop: "6px", background: "none", border: "none", padding: 0,
-    color: "#1d4ed8", textDecoration: "underline", cursor: "pointer", fontSize: "14px",
+    color: "#9cc3ff", textDecoration: "underline", cursor: "pointer", fontSize: "14px",
   },
   main: { margin: 0, fontSize: "18px", fontWeight: 700 },
-  note: { margin: "6px 0 0", color: "#555", fontSize: "14px" },
-  error: { margin: "8px 0 0", color: "#b00020", fontWeight: 600 },
+  note: { margin: "6px 0 0", color: "#c8cdd3", fontSize: "14px" },
+  error: { margin: "8px 0 0", color: "#ff9b91", fontWeight: 600 },
 };
