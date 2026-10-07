@@ -3,6 +3,7 @@
 
 import { getYangjuFires } from "../lib/disasters";
 import { getAnalysis } from "../lib/analysis";
+import { getCurrentWind } from "../lib/weather";
 
 // 접속할 때마다 재난문자 목록은 새로 확인하기 (AI 분석 결과는 저장된 걸 다시 씀)
 export const dynamic = "force-dynamic";
@@ -31,10 +32,12 @@ export default async function Home() {
     error = e.message;
   }
 
-  // 문자마다 AI 분석 결과 가져오기 (동시에 요청). 실패한 문자는 분석 없이 원문만 보여줌
-  const analyses = await Promise.all(
-    fires.map((fire) => getAnalysis(fire.id, fire.text).catch(() => null))
-  );
+  // 문자마다 AI 분석 결과 + 현재 바람을 동시에 가져오기
+  // 실패한 문자는 분석 없이 원문만, 바람을 못 가져오면 안내 문장만 보여줌
+  const [analyses, wind] = await Promise.all([
+    Promise.all(fires.map((fire) => getAnalysis(fire.id, fire.text).catch(() => null))),
+    getCurrentWind().catch((e) => ({ error: e.message })),
+  ]);
 
   return (
     <main style={styles.main}>
@@ -42,6 +45,8 @@ export default async function Home() {
       <p style={styles.summary}>
         2026년 8월 1일 이후 발송된 문자 {fires.length}건
       </p>
+
+      <Wind wind={wind} />
 
       {error && <p style={styles.error}>{error}</p>}
 
@@ -59,6 +64,33 @@ export default async function Home() {
         ))}
       </ul>
     </main>
+  );
+}
+
+// 현재 바람과 연기 이동 방향
+function Wind({ wind }) {
+  if (wind.error) {
+    return <p style={styles.muted}>현재 바람 정보를 불러오지 못했어요. ({wind.error})</p>;
+  }
+  return (
+    <section style={styles.wind}>
+      {wind.isCalm ? (
+        <p style={styles.windMain}>지금은 바람이 거의 없어요 ({wind.speed}m/s)</p>
+      ) : (
+        <p style={styles.windMain}>
+          <span
+            aria-hidden="true"
+            style={{ ...styles.arrow, transform: `rotate(${wind.smokeTo}deg)` }}
+          >
+            ↑
+          </span>
+          연기는 {wind.smokeToName} 방향으로 이동해요
+        </p>
+      )}
+      <p style={styles.windSub}>
+        {wind.windFromName}풍 {wind.speed}m/s, 기상청 {wind.observedAt} 관측, 양주시청 부근 기준
+      </p>
+    </section>
   );
 }
 
@@ -125,4 +157,8 @@ const styles = {
   dd: { margin: 0, fontWeight: 600 },
   actionsTitle: { margin: "10px 0 2px", color: "#555" },
   actions: { margin: 0, paddingLeft: "20px" },
+  wind: { border: "1px solid #ccd5df", borderRadius: "8px", padding: "12px 14px", margin: "16px 0" },
+  windMain: { margin: 0, fontSize: "18px", fontWeight: 700, display: "flex", alignItems: "center", gap: "10px" },
+  arrow: { display: "inline-block", fontSize: "24px", lineHeight: 1 },
+  windSub: { margin: "4px 0 0", color: "#555", fontSize: "14px" },
 };
