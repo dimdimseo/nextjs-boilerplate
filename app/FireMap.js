@@ -1,10 +1,10 @@
 "use client";
-// 카카오 지도에 화재 위치, 내 위치, 거리 점선, 연기 방향 화살표를 그리는 조각
+// 카카오 지도에 화재 위치, 내 위치, 거리 점선, 바람 흐름선을 그리는 조각
 // 휴대폰 브라우저에서 실행돼요. 지도 키(NEXT_PUBLIC_KAKAO_JS_KEY)는 등록한 사이트에서만 작동해요.
 
 import { useEffect, useRef, useState } from "react";
 import { useMyPosition } from "./LocationContext";
-import { distanceKm, destination, isSmokeTowardMe } from "../lib/geo";
+import { distanceKm, destination } from "../lib/geo";
 
 // 카카오 지도 프로그램을 한 번만 불러오기
 let loadingPromise = null;
@@ -26,25 +26,33 @@ function loadKakao(key) {
   return loadingPromise;
 }
 
-// 지도 위에 올릴 작은 표시 (글자는 textContent로 넣어 안전하게)
-// textFirst: 글씨를 점의 왼쪽에 둘 때 true
-function makeLabel(text, color, dot = true, dark = false, textFirst = false) {
-  const box = document.createElement("div");
-  box.style.cssText =
-    "display:flex;align-items:center;gap:6px;transform:translateY(-4px);font:700 13px system-ui,sans-serif;";
-  if (dot) {
-    const d = document.createElement("span");
-    d.style.cssText = `width:14px;height:14px;border-radius:50%;background:${color};border:3px solid #fff;box-shadow:0 0 0 1px rgba(0,0,0,.25);`;
-    box.appendChild(d);
-  }
-  const t = document.createElement("span");
-  t.textContent = text;
-  t.style.cssText = dark
-    ? "background:#111418;color:#fff;padding:3px 10px;border-radius:999px;white-space:nowrap;"
-    : `background:#fff;color:${color};padding:3px 8px;border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,.25);white-space:nowrap;`;
-  if (textFirst) box.insertBefore(t, box.firstChild);
-  else box.appendChild(t);
+// 지도 위 표시 만들기 (글자는 textContent로 넣어 안전하게)
+function el(tag, css, text) {
+  const e = document.createElement(tag);
+  e.style.cssText = css;
+  if (text) e.textContent = text;
+  return e;
+}
+
+// 화재 표시: 빨간 점 + 테두리 있는 알약 모양 글씨
+function fireMarker(text) {
+  const box = el("div", "display:flex;align-items:center;gap:8px;padding:7px 14px 7px 10px;background:#fff;border:2px solid #D24B3E;border-radius:999px;box-shadow:0 0 0 6px rgba(210,75,62,.18),0 2px 6px rgba(0,0,0,.2);font:800 15px system-ui,sans-serif;color:#B42318;white-space:nowrap;");
+  box.appendChild(el("span", "width:14px;height:14px;border-radius:50%;background:#D24B3E;box-shadow:0 0 0 4px rgba(210,75,62,.25);"));
+  box.appendChild(el("span", "", text));
   return box;
+}
+
+// 내 위치 표시: 파란 점 + 흰 알약 글씨
+function meMarker(text) {
+  const box = el("div", "display:flex;align-items:center;gap:6px;font:700 13px system-ui,sans-serif;");
+  box.appendChild(el("span", "width:16px;height:16px;border-radius:50%;background:#2F6BEA;border:3px solid #fff;box-shadow:0 0 0 6px rgba(47,107,234,.2),0 1px 3px rgba(0,0,0,.3);"));
+  box.appendChild(el("span", "background:#fff;color:#1F3F8F;padding:5px 10px;border-radius:999px;box-shadow:0 2px 6px rgba(0,0,0,.15);white-space:nowrap;", text));
+  return box;
+}
+
+// 거리 표시: 검은 알약
+function distanceLabel(text) {
+  return el("div", "background:#111418;color:#fff;padding:4px 10px;border-radius:999px;font:700 12px system-ui,sans-serif;white-space:nowrap;", text);
 }
 
 export default function FireMap({ location, wind, height = null, dragging = false }) {
@@ -73,51 +81,48 @@ export default function FireMap({ location, wind, height = null, dragging = fals
     bounds.extend(fire);
 
     // 화재 표시 (번지를 못 찾았으면 "대략적 위치")
-    const fireText =
-      location.precision === "area" ? `${location.label} 중심 (대략적 위치)` : "화재 발생지";
-    // 연기가 동쪽(오른쪽)으로 가면 "화재 발생지" 글씨는 왼쪽에, 서쪽으로 가면 오른쪽에 (글씨 겹침 방지)
-    const smokeGoesEast = wind && !wind.error && !wind.isCalm && wind.smokeTo > 0 && wind.smokeTo < 180;
-    add(new kakao.maps.CustomOverlay({
-      position: fire,
-      content: makeLabel(fireText, "#D9480F", true, false, smokeGoesEast),
-      yAnchor: 0.5,
-      xAnchor: smokeGoesEast ? 0.93 : 0.07,
-    }));
+    const fireText = location.precision === "area" ? `${location.label} 중심 (대략)` : "화재 발생지";
+    add(new kakao.maps.CustomOverlay({ position: fire, content: fireMarker(fireText), xAnchor: 0.12, yAnchor: 0.5, zIndex: 3 }));
 
     // 내 위치, 점선, 거리
-    let km = null;
     if (position) {
       const me = toLatLng(position);
-      km = distanceKm(position, location);
       bounds.extend(me);
-      const meText = position.source === "place" ? `나 (${position.label} 중심)` : "나";
-      add(new kakao.maps.CustomOverlay({ position: me, content: makeLabel(meText, "#1D4ED8"), yAnchor: 0.5, xAnchor: 0.1 }));
-      add(new kakao.maps.Polyline({ path: [me, fire], strokeWeight: 2, strokeColor: "#111418", strokeOpacity: 0.9, strokeStyle: "dash" }));
+      const meText = position.source === "place" ? `${position.label} 중심` : "내 위치";
+      add(new kakao.maps.CustomOverlay({ position: me, content: meMarker(meText), xAnchor: 0.08, yAnchor: 0.5, zIndex: 3 }));
+      add(new kakao.maps.Polyline({ path: [me, fire], strokeWeight: 2, strokeColor: "#111418", strokeOpacity: 0.8, strokeStyle: "dash" }));
+      const km = distanceKm(position, location);
       const mid = { lat: (position.lat + location.lat) / 2, lon: (position.lon + location.lon) / 2 };
-      add(new kakao.maps.CustomOverlay({ position: toLatLng(mid), content: makeLabel(`약 ${km.toFixed(1)} km`, "#111418", false, true), yAnchor: 0.5 }));
+      add(new kakao.maps.CustomOverlay({ position: toLatLng(mid), content: distanceLabel(`약 ${km.toFixed(1)} km`), yAnchor: 0.5, zIndex: 2 }));
     }
 
-    // 연기 방향 화살표 (바람이 거의 없으면 그리지 않음)
+    // 화면 맞추기: 내 위치가 있으면 둘 다 보이게(위쪽은 지도 위 카드들만큼 여백), 없으면 화재 중심으로
+    if (position) {
+      map.setBounds(bounds, 200, 48, 48, 48);
+    } else {
+      map.setLevel(4);
+      map.setCenter(fire);
+    }
+
+    // 바람 흐름선: 화재 지점 주변에 바람이 향하는 방향으로 점선 화살표 여러 개
+    // (화재 지점 격자 관측값 1개를 표현한 것이라 지역별 바람 차이를 뜻하지는 않아요)
     if (wind && !wind.error && !wind.isCalm) {
-      const length = km ? Math.max(0.4, Math.min(km * 0.3, 3)) : 0.8; // 화면 크기에 맞춘 화살표 길이(km)
-      const tip = destination(location, wind.smokeTo, length);
-      bounds.extend(toLatLng(tip));
-      // 연기가 내 쪽이면 빨간 화살표, 아니면 초록 화살표
-      const arrowColor = isSmokeTowardMe(location, position, wind) ? "#B42318" : "#0B6E4F";
-      add(new kakao.maps.Polyline({ path: [fire, toLatLng(tip)], strokeWeight: 5, strokeColor: arrowColor, strokeOpacity: 0.95, endArrow: true }));
-      // "연기 방향" 글씨는 화살표 끝보다 조금 더 나아간 곳에, 화살표가 가는 쪽으로
-      const labelAt = destination(location, wind.smokeTo, length * 1.15);
-      const goesEast = wind.smokeTo > 0 && wind.smokeTo < 180;
-      add(new kakao.maps.CustomOverlay({
-        position: toLatLng(labelAt),
-        content: makeLabel("연기 방향", arrowColor, false),
-        xAnchor: goesEast ? 0 : 1,
-        yAnchor: 0.5,
-      }));
+      const b = map.getBounds();
+      const sw = b.getSouthWest();
+      const ne = b.getNorthEast();
+      const latSpan = ne.getLat() - sw.getLat();
+      const lonSpan = ne.getLng() - sw.getLng();
+      const spanKm = distanceKm({ lat: sw.getLat(), lon: sw.getLng() }, { lat: ne.getLat(), lon: ne.getLng() });
+      const len = spanKm * 0.12;
+      for (const i of [-1, 0, 1]) {
+        for (const j of [-1, 0, 1]) {
+          if (i === 0 && j === 0) continue; // 화재 표시 바로 위는 비우기
+          const start = { lat: location.lat + i * latSpan * 0.22, lon: location.lon + j * lonSpan * 0.3 };
+          const end = destination(start, wind.smokeTo, len);
+          add(new kakao.maps.Polyline({ path: [toLatLng(start), toLatLng(end)], strokeWeight: 3, strokeColor: "#4C7DF0", strokeOpacity: 0.75, strokeStyle: "dash", endArrow: true, zIndex: 1 }));
+        }
+      }
     }
-
-    // 표시들이 모두 보이게 화면 맞추기 (가장자리 여백 40px)
-    map.setBounds(bounds, 40, 40, 40, 40);
   }
 
   // 처음 한 번: 카카오 지도 불러와서 만들기

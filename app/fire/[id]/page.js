@@ -30,14 +30,14 @@ export async function generateMetadata({ params, searchParams }) {
     const { incident } = await getData(id, from);
     if (incident) {
       return {
-        title: `${incidentTitle(incident)} | 양주시 AI 재난 거리 안내`,
+        title: `${incidentTitle(incident)} | 양주 재난나침반`,
         description: incident.latest.text.slice(0, 80),
       };
     }
   } catch {
     // 불러오지 못하면 기본 제목
   }
-  return { title: "화재 정보 | 양주시 AI 재난 거리 안내" };
+  return { title: "화재 정보 | 양주 재난나침반" };
 }
 
 export default async function FirePage({ params, searchParams }) {

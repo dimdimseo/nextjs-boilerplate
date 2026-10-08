@@ -46,7 +46,7 @@ export default async function Home() {
             <circle cx="17.5" cy="6.5" r="2" fill="#D9480F" stroke="none" />
           </svg>
         </div>
-        <h1 style={s.title}>양주시 재난 거리 안내</h1>
+        <h1 style={s.title}>양주 재난나침반</h1>
       </div>
 
       {error && <p style={s.error}>정보를 불러오지 못했어요. ({error})</p>}

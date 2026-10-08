@@ -5,6 +5,7 @@
 // 시트가 지도를 덮지 않고 지도 높이 자체가 바뀌어서, 카카오 로고가 늘 보여요.
 
 import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import FireMap from "./FireMap";
 import { ShareButton, GpsButton } from "./MapButtons";
 
@@ -13,12 +14,12 @@ const SHEET_PEEK = 170; // 지도를 크게 해도 아래 시트 윗부분(제�
 
 function sizes() {
   const vh = window.innerHeight;
-  const small = Math.min(Math.max(vh * 0.52, 340), 480);
+  const small = Math.min(Math.max(vh * 0.6, 400), 560);
   const large = Math.max(small + 80, vh - TAB_BAR - SHEET_PEEK);
   return { small, large };
 }
 
-export default function ExpandableMap({ location, wind, title }) {
+export default function ExpandableMap({ location, wind, title, placeText, timeText, stale, recordsHref }) {
   const [limits, setLimits] = useState(null);
   const [expanded, setExpanded] = useState(false);
   const [dragHeight, setDragHeight] = useState(null); // 끄는 중일 때의 높이
@@ -72,10 +73,52 @@ export default function ExpandableMap({ location, wind, title }) {
     <>
       <div style={s.mapWrap}>
         <FireMap location={location} wind={wind} height={height} dragging={dragHeight !== null} />
-        <div style={s.mapTop}>
-          <p style={s.brand}>양주시 재난 거리 안내</p>
-          <ShareButton title={title} />
+
+        {/* 지도 위 카드들 (카카오 로고가 있는 왼쪽 아래는 비워둠) */}
+        <div style={s.overlay}>
+          <div style={s.brandCard}>
+            <span style={s.brandIcon} aria-hidden="true">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#2F5BC9" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="9" />
+                <path d="M15.5 8.5l-2 5-5 2 2-5z" fill="#D24B3E" stroke="#D24B3E" />
+              </svg>
+            </span>
+            <p style={s.brandName}>양주 재난나침반</p>
+            <ShareButton title={title} />
+          </div>
+
+          <Link href={recordsHref} style={s.incident} aria-label="같은 달 재난 기록 보기">
+            <span style={s.incDot} aria-hidden="true" />
+            <span style={s.incText}>
+              <span style={s.incTitle}>화재 · {placeText}</span>
+              <span style={s.incSub}>
+                {timeText} · {stale ? "지난 화재" : "진행 중"}
+              </span>
+            </span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9B1C1C" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+              <path d="M9 6l6 6-6 6" />
+            </svg>
+          </Link>
+
+          <div style={s.chips}>
+            {wind && !wind.error && (
+              <p style={s.chip}>
+                {!wind.isCalm && (
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2F5BC9" strokeWidth="2.4" strokeLinecap="round" aria-hidden="true" style={{ transform: `rotate(${wind.smokeTo}deg)` }}>
+                    <path d="M12 20V4M6 10l6-6 6 6" />
+                  </svg>
+                )}
+                {wind.isCalm ? `바람 거의 없음 · ${wind.speed}m/s` : `${wind.windFromName}풍 · ${wind.speed}m/s`}
+              </p>
+            )}
+            <p style={s.chip}>
+              <span style={{ ...s.legendDot, background: "#2F6BEA" }} aria-hidden="true" />내 위치
+              <span style={{ ...s.legendDot, background: "#D24B3E", marginLeft: "8px" }} aria-hidden="true" />화재
+              <span style={s.legendArrow} aria-hidden="true">→</span>바람 방향
+            </p>
+          </div>
         </div>
+
         <div style={s.mapGps}>
           <GpsButton />
         </div>
@@ -103,15 +146,27 @@ export default function ExpandableMap({ location, wind, title }) {
   );
 }
 
+const shadow = "0 2px 8px rgba(17,20,24,0.12)";
 const s = {
   mapWrap: { position: "relative" },
-  mapTop: { position: "absolute", left: "12px", right: "12px", top: "14px", display: "flex", justifyContent: "space-between", alignItems: "flex-start", zIndex: 10, pointerEvents: "none" },
-  brand: { margin: 0, padding: "8px 12px", background: "#FFFFFF", borderRadius: "999px", fontSize: "13px", fontWeight: 600, boxShadow: "0 1px 4px rgba(17,20,24,0.14)" },
+  overlay: { position: "absolute", left: "12px", right: "12px", top: "12px", display: "flex", flexDirection: "column", gap: "10px", zIndex: 10, pointerEvents: "none" },
+  brandCard: { display: "flex", alignItems: "center", gap: "10px", padding: "8px 8px 8px 10px", background: "#FFFFFF", borderRadius: "18px", boxShadow: shadow, pointerEvents: "auto" },
+  brandIcon: { width: "40px", height: "40px", borderRadius: "12px", background: "#EEF3FE", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 },
+  brandName: { margin: 0, flex: 1, fontSize: "17px", fontWeight: 800 },
+  incident: { display: "flex", alignItems: "center", gap: "10px", padding: "10px 14px", background: "#FDEDEB", border: "1.5px solid #F2BDB7", borderRadius: "16px", textDecoration: "none", color: "inherit", boxShadow: shadow, pointerEvents: "auto" },
+  incDot: { width: "10px", height: "10px", borderRadius: "999px", background: "#D24B3E", flexShrink: 0 },
+  incText: { display: "flex", flexDirection: "column", flex: 1, minWidth: 0 },
+  incTitle: { fontSize: "16px", fontWeight: 800, color: "#9B2C1F", lineHeight: 1.35 },
+  incSub: { fontSize: "13px", color: "#7A4A44" },
+  chips: { display: "flex", flexWrap: "wrap", gap: "8px" },
+  chip: { margin: 0, display: "flex", alignItems: "center", gap: "6px", padding: "7px 12px", background: "#FFFFFF", borderRadius: "999px", boxShadow: shadow, fontSize: "13px", fontWeight: 700 },
+  legendDot: { width: "9px", height: "9px", borderRadius: "999px", display: "inline-block" },
+  legendArrow: { color: "#2F6BEA", fontWeight: 800, marginLeft: "8px" },
   mapGps: { position: "absolute", right: "14px", bottom: "20px", zIndex: 10 },
-  handleArea: { background: "#F4F5F7", borderRadius: "24px 24px 0 0", boxShadow: "0 -2px 10px rgba(17,20,24,0.08)", position: "relative", zIndex: 5 },
+  handleArea: { background: "#FFFFFF", borderRadius: "24px 24px 0 0", boxShadow: "0 -2px 10px rgba(17,20,24,0.08)", position: "relative", zIndex: 5 },
   handleButton: {
     display: "flex", alignItems: "center", justifyContent: "center", width: "100%", height: "32px",
     border: "none", background: "transparent", cursor: "grab", touchAction: "none", padding: 0,
   },
-  handle: { width: "44px", height: "5px", borderRadius: "5px", background: "#AEB4BC" },
+  handle: { width: "44px", height: "5px", borderRadius: "5px", background: "#C9CDD3" },
 };

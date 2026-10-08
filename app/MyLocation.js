@@ -43,7 +43,7 @@ export default function MyLocation() {
 }
 
 const s = {
-  box: { background: "#FFFFFF", borderRadius: "16px", padding: "10px 12px", boxShadow: "0 1px 3px rgba(17,20,24,0.08)" },
+  box: { background: "#FFFFFF", borderRadius: "16px", padding: "10px 12px", border: "1px solid #E5E8EC" },
   row: { display: "flex", alignItems: "center", gap: "10px" },
   label: { fontSize: "15px", fontWeight: 700, flexShrink: 0 },
   select: {
