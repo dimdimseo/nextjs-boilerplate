@@ -1,10 +1,9 @@
 // 화재 1건 화면 (UI 시안): 지도 → 시트(제목, 거리·바람, 참고, 내 위치, 공식 안내 …)
 
 import { LocationProvider } from "./LocationContext";
-import FireMap from "./FireMap";
+import ExpandableMap from "./ExpandableMap";
 import DistanceCard from "./DistanceCard";
 import MyLocation from "./MyLocation";
-import { ShareButton, GpsButton } from "./MapButtons";
 import Footer from "./Footer";
 import { ACTION_LABELS, incidentTitle } from "./ui";
 import { formatKst, formatKstTime, timeAgo } from "../lib/incidents";
@@ -40,21 +39,10 @@ export default function FireView({ incident, stale }) {
           </p>
         )}
 
-        {/* 지도 + 지도 위 버튼 (카카오 로고가 있는 왼쪽 아래는 비워둠) */}
-        <div style={s.mapWrap}>
-          <FireMap location={incident.location} wind={incident.wind} />
-          <div style={s.mapTop}>
-            <p style={s.brand}>양주시 재난 거리 안내</p>
-            <ShareButton title={title} />
-          </div>
-          <div style={s.mapGps}>
-            <GpsButton />
-          </div>
-        </div>
+        {/* 지도 + 지도 위 버튼 + 크기 조절 손잡이 (카카오 로고가 있는 왼쪽 아래는 비워둠) */}
+        <ExpandableMap location={incident.location} wind={incident.wind} title={title} />
 
         <section style={s.sheet}>
-          <div style={s.handle} />
-
           <div style={s.header}>
             <div style={s.icon} aria-hidden="true">
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#D9480F" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -160,7 +148,7 @@ const s = {
   mapTop: { position: "absolute", left: "12px", right: "12px", top: "14px", display: "flex", justifyContent: "space-between", alignItems: "flex-start", zIndex: 10, pointerEvents: "none" },
   brand: { margin: 0, padding: "8px 12px", background: "#FFFFFF", borderRadius: "999px", fontSize: "13px", fontWeight: 600, boxShadow: "0 1px 4px rgba(17,20,24,0.14)" },
   mapGps: { position: "absolute", right: "14px", bottom: "20px", zIndex: 10 },
-  sheet: { background: "#F4F5F7", borderRadius: "24px 24px 0 0", padding: "10px 16px 0", display: "flex", flexDirection: "column", gap: "12px", position: "relative", boxShadow: "0 -2px 10px rgba(17,20,24,0.08)" },
+  sheet: { background: "#F4F5F7", padding: "2px 16px 0", display: "flex", flexDirection: "column", gap: "12px", position: "relative", zIndex: 5 },
   handle: { width: "36px", height: "4px", borderRadius: "4px", background: "#C9CDD3", alignSelf: "center" },
   header: { display: "flex", gap: "12px", alignItems: "flex-start" },
   icon: { width: "44px", height: "44px", flexShrink: 0, borderRadius: "12px", background: "#FDEBE3", display: "flex", alignItems: "center", justifyContent: "center" },

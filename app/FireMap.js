@@ -47,7 +47,7 @@ function makeLabel(text, color, dot = true, dark = false, textFirst = false) {
   return box;
 }
 
-export default function FireMap({ location, wind }) {
+export default function FireMap({ location, wind, height = null, dragging = false }) {
   const { position } = useMyPosition();
   const boxRef = useRef(null);
   const mapRef = useRef(null);
@@ -149,6 +149,17 @@ export default function FireMap({ location, wind }) {
     draw();
   }, [position, wind]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // 지도 크기가 바뀌면 카카오 지도에 알려주고(relayout) 표시들이 다 보이게 다시 맞추기
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+    const timer = setTimeout(() => {
+      map.relayout();
+      if (!dragging) draw();
+    }, dragging ? 0 : 280); // 크기 변화 애니메이션이 끝난 뒤
+    return () => clearTimeout(timer);
+  }, [height, dragging]); // eslint-disable-line react-hooks/exhaustive-deps
+
   if (!location) {
     return (
       <div style={{ ...styles.map, ...styles.empty }}>
@@ -158,10 +169,13 @@ export default function FireMap({ location, wind }) {
   }
 
   // 카카오 로고가 지도 왼쪽 아래에 표시돼요. 그 위를 가리지 않도록 지도 위에 아무것도 겹치지 않아요.
+  const sized = height
+    ? { height: `${height}px`, minHeight: 0, maxHeight: "none", transition: dragging ? "none" : "height 0.25s ease" }
+    : {};
   return error ? (
-    <div style={{ ...styles.map, ...styles.empty }}>{error}</div>
+    <div style={{ ...styles.map, ...sized, ...styles.empty }}>{error}</div>
   ) : (
-    <div ref={boxRef} style={styles.map} aria-label="화재 위치와 내 위치를 보여주는 지도" />
+    <div ref={boxRef} style={{ ...styles.map, ...sized }} aria-label="화재 위치와 내 위치를 보여주는 지도" />
   );
 }
 
