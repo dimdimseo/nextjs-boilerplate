@@ -53,7 +53,7 @@ export function Incident({ incident, showLink = false }) {
       <h2 style={styles.incidentTitle}>{title}</h2>
       {showLink && (
         <Link href={`/fire/${incident.id}`} style={styles.detailLink}>
-          이 화재 페이지 열기 (공유용 주소)
+          지도와 함께 보기 (공유용 주소)
         </Link>
       )}
 
