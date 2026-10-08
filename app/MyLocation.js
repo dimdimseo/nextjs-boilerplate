@@ -4,11 +4,12 @@
 // 받은 위치는 이 휴대폰 안에서만 쓰고, 서버로 보내지 않아요.
 
 import { useState } from "react";
+import { useMyPosition } from "./LocationContext";
 
 export default function MyLocation() {
   // status: 아직 안 누름(idle) / 확인 중(loading) / 성공(done) / 실패(error)
   const [status, setStatus] = useState("idle");
-  const [position, setPosition] = useState(null);
+  const { position, setPosition } = useMyPosition(); // 화재 카드들과 같이 쓰는 위치
   const [message, setMessage] = useState("");
 
   function requestLocation() {
@@ -62,13 +63,12 @@ export default function MyLocation() {
 
       {status === "error" && <p style={styles.error}>{message}</p>}
 
-      {status === "done" && (
+      {status === "done" && position && (
         <>
           <p style={styles.main}>내 위치를 확인했어요</p>
           <p style={styles.note}>
-            위도 {position.lat.toFixed(4)}, 경도 {position.lon.toFixed(4)} (오차 약 {position.accuracy}m)
+            오차 약 {position.accuracy}m. 아래 화재마다 거리와 방향이 나와요.
           </p>
-          <p style={styles.note}>화재 위치와의 거리는 화재 좌표 확인 기능이 준비되면 표시돼요.</p>
           <button onClick={requestLocation} style={styles.linkButton}>
             위치 다시 확인
           </button>
