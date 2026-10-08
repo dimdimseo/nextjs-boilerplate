@@ -1,10 +1,12 @@
-// 화재별 페이지: /fire/화재번호 (서비스의 메인 화면)
-// 이 파일 하나가 화재마다 다른 페이지를 자동으로 만들어줘요.
+// 화재 페이지: /fire/화재번호?from=날짜 (지도 탭의 메인 화면)
+// from: 그 화재의 첫 문자 날짜("20260806"). 이 날짜부터 3일 치만 불러와 화재를 찾아요.
+// from이 없으면 최근 3일에서 찾아요 (진행 중 화재).
 
 import { cache } from "react";
 import { loadIncidents, findIncident } from "../../../lib/loadIncidents";
-import { START_DATE } from "../../../lib/config";
+import { RECENT_DAYS } from "../../../lib/config";
 import { isCurrent } from "../../../lib/incidents";
+import { addDaysYmd, recentStart } from "../../../lib/dates";
 import FireView from "../../FireView";
 import Footer from "../../Footer";
 import { incidentTitle } from "../../ui";
@@ -12,19 +14,20 @@ import { incidentTitle } from "../../ui";
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
-// 주소의 번호로 화재 찾기 (한 번 접속 중엔 한 번만 계산)
-const getData = cache(async (id) => {
-  const { incidents } = await loadIncidents(START_DATE);
-  const incident = findIncident(incidents, id);
-  const otherCurrent = incidents.filter((inc) => inc !== incident && isCurrent(inc));
-  return { incident, otherCurrent };
+const getData = cache(async (id, from) => {
+  const valid = /^\d{8}$/.test(from ?? "");
+  const start = valid ? from : recentStart(RECENT_DAYS);
+  const end = valid ? addDaysYmd(from, 3) : null;
+  const { incidents } = await loadIncidents(start, end);
+  return { incident: findIncident(incidents, id) };
 });
 
 // 카카오톡 등으로 공유할 때 미리보기 제목과 설명
-export async function generateMetadata({ params }) {
+export async function generateMetadata({ params, searchParams }) {
   const { id } = await params;
+  const { from } = await searchParams;
   try {
-    const { incident } = await getData(id);
+    const { incident } = await getData(id, from);
     if (incident) {
       return {
         title: `${incidentTitle(incident)} | 양주시 AI 재난 거리 안내`,
@@ -37,12 +40,13 @@ export async function generateMetadata({ params }) {
   return { title: "화재 정보 | 양주시 AI 재난 거리 안내" };
 }
 
-export default async function FirePage({ params }) {
+export default async function FirePage({ params, searchParams }) {
   const { id } = await params;
+  const { from } = await searchParams;
   let data = null;
   let error = null;
   try {
-    data = await getData(id);
+    data = await getData(id, from);
   } catch (e) {
     error = e.message;
   }
@@ -53,23 +57,17 @@ export default async function FirePage({ params }) {
         <p style={s.msg}>
           {error
             ? `정보를 불러오지 못했어요. (${error})`
-            : "이 화재 정보를 찾을 수 없어요. 조회 기간을 벗어났거나 주소가 잘못됐을 수 있어요."}
+            : "이 화재를 찾지 못했어요. 아래 재난 기록 탭에서 날짜로 찾아보세요."}
         </p>
         <Footer />
       </main>
     );
   }
 
-  return (
-    <FireView
-      incident={data.incident}
-      stale={!isCurrent(data.incident)}
-      otherCurrent={data.otherCurrent}
-    />
-  );
+  return <FireView incident={data.incident} stale={!isCurrent(data.incident)} />;
 }
 
 const s = {
-  page: { maxWidth: "560px", margin: "0 auto", minHeight: "100vh", background: "#f3f4f6", fontFamily: "system-ui, sans-serif", padding: "24px 0 0" },
-  msg: { margin: "0 16px 12px", fontWeight: 600 },
+  page: { maxWidth: "560px", margin: "0 auto", padding: "24px 16px 0" },
+  msg: { margin: "0 0 12px", fontWeight: 600 },
 };

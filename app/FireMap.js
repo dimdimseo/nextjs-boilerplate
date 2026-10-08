@@ -4,7 +4,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useMyPosition } from "./LocationContext";
-import { distanceKm, destination } from "../lib/geo";
+import { distanceKm, destination, isSmokeTowardMe } from "../lib/geo";
 
 // 카카오 지도 프로그램을 한 번만 불러오기
 let loadingPromise = null;
@@ -27,7 +27,8 @@ function loadKakao(key) {
 }
 
 // 지도 위에 올릴 작은 표시 (글자는 textContent로 넣어 안전하게)
-function makeLabel(text, color, dot = true) {
+// textFirst: 글씨를 점의 왼쪽에 둘 때 true
+function makeLabel(text, color, dot = true, dark = false, textFirst = false) {
   const box = document.createElement("div");
   box.style.cssText =
     "display:flex;align-items:center;gap:6px;transform:translateY(-4px);font:700 13px system-ui,sans-serif;";
@@ -38,8 +39,11 @@ function makeLabel(text, color, dot = true) {
   }
   const t = document.createElement("span");
   t.textContent = text;
-  t.style.cssText = `background:#fff;color:${color};padding:2px 6px;border-radius:6px;box-shadow:0 1px 3px rgba(0,0,0,.25);white-space:nowrap;`;
-  box.appendChild(t);
+  t.style.cssText = dark
+    ? "background:#111418;color:#fff;padding:3px 10px;border-radius:999px;white-space:nowrap;"
+    : `background:#fff;color:${color};padding:3px 8px;border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,.25);white-space:nowrap;`;
+  if (textFirst) box.insertBefore(t, box.firstChild);
+  else box.appendChild(t);
   return box;
 }
 
@@ -71,7 +75,14 @@ export default function FireMap({ location, wind }) {
     // 화재 표시 (번지를 못 찾았으면 "대략적 위치")
     const fireText =
       location.precision === "area" ? `${location.label} 중심 (대략적 위치)` : "화재 발생지";
-    add(new kakao.maps.CustomOverlay({ position: fire, content: makeLabel(fireText, "#d93025"), yAnchor: 0.5, xAnchor: 0.1 }));
+    // 연기가 동쪽(오른쪽)으로 가면 "화재 발생지" 글씨는 왼쪽에, 서쪽으로 가면 오른쪽에 (글씨 겹침 방지)
+    const smokeGoesEast = wind && !wind.error && !wind.isCalm && wind.smokeTo > 0 && wind.smokeTo < 180;
+    add(new kakao.maps.CustomOverlay({
+      position: fire,
+      content: makeLabel(fireText, "#D9480F", true, false, smokeGoesEast),
+      yAnchor: 0.5,
+      xAnchor: smokeGoesEast ? 0.93 : 0.07,
+    }));
 
     // 내 위치, 점선, 거리
     let km = null;
@@ -80,10 +91,10 @@ export default function FireMap({ location, wind }) {
       km = distanceKm(position, location);
       bounds.extend(me);
       const meText = position.source === "place" ? `나 (${position.label} 중심)` : "나";
-      add(new kakao.maps.CustomOverlay({ position: me, content: makeLabel(meText, "#1a5fd1"), yAnchor: 0.5, xAnchor: 0.1 }));
-      add(new kakao.maps.Polyline({ path: [me, fire], strokeWeight: 3, strokeColor: "#333333", strokeOpacity: 0.8, strokeStyle: "dash" }));
+      add(new kakao.maps.CustomOverlay({ position: me, content: makeLabel(meText, "#1D4ED8"), yAnchor: 0.5, xAnchor: 0.1 }));
+      add(new kakao.maps.Polyline({ path: [me, fire], strokeWeight: 2, strokeColor: "#111418", strokeOpacity: 0.9, strokeStyle: "dash" }));
       const mid = { lat: (position.lat + location.lat) / 2, lon: (position.lon + location.lon) / 2 };
-      add(new kakao.maps.CustomOverlay({ position: toLatLng(mid), content: makeLabel(`약 ${km.toFixed(1)}km`, "#111111", false), yAnchor: 0.5 }));
+      add(new kakao.maps.CustomOverlay({ position: toLatLng(mid), content: makeLabel(`약 ${km.toFixed(1)} km`, "#111418", false, true), yAnchor: 0.5 }));
     }
 
     // 연기 방향 화살표 (바람이 거의 없으면 그리지 않음)
@@ -91,8 +102,18 @@ export default function FireMap({ location, wind }) {
       const length = km ? Math.max(0.4, Math.min(km * 0.3, 3)) : 0.8; // 화면 크기에 맞춘 화살표 길이(km)
       const tip = destination(location, wind.smokeTo, length);
       bounds.extend(toLatLng(tip));
-      add(new kakao.maps.Polyline({ path: [fire, toLatLng(tip)], strokeWeight: 5, strokeColor: "#0a8f6a", strokeOpacity: 0.9, endArrow: true }));
-      add(new kakao.maps.CustomOverlay({ position: toLatLng(tip), content: makeLabel("연기 방향", "#0a8f6a", false), yAnchor: 1.4 }));
+      // 연기가 내 쪽이면 빨간 화살표, 아니면 초록 화살표
+      const arrowColor = isSmokeTowardMe(location, position, wind) ? "#B42318" : "#0B6E4F";
+      add(new kakao.maps.Polyline({ path: [fire, toLatLng(tip)], strokeWeight: 5, strokeColor: arrowColor, strokeOpacity: 0.95, endArrow: true }));
+      // "연기 방향" 글씨는 화살표 끝보다 조금 더 나아간 곳에, 화살표가 가는 쪽으로
+      const labelAt = destination(location, wind.smokeTo, length * 1.15);
+      const goesEast = wind.smokeTo > 0 && wind.smokeTo < 180;
+      add(new kakao.maps.CustomOverlay({
+        position: toLatLng(labelAt),
+        content: makeLabel("연기 방향", arrowColor, false),
+        xAnchor: goesEast ? 0 : 1,
+        yAnchor: 0.5,
+      }));
     }
 
     // 표시들이 모두 보이게 화면 맞추기 (가장자리 여백 40px)
@@ -129,26 +150,22 @@ export default function FireMap({ location, wind }) {
   }, [position, wind]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!location) {
-    return <p style={styles.muted}>화재 위치를 찾지 못해 지도를 표시할 수 없어요.</p>;
+    return (
+      <div style={{ ...styles.map, ...styles.empty }}>
+        화재 위치를 찾지 못해 지도를 표시할 수 없어요. 아래 공식 안내의 장소를 확인하세요.
+      </div>
+    );
   }
 
-  return (
-    <figure style={styles.figure}>
-      {error ? <p style={styles.error}>{error}</p> : <div ref={boxRef} style={styles.map} />}
-      <figcaption style={styles.caption}>
-        지도: 카카오맵. 지도를 그리기 위해 카카오가 화면에 보이는 지역의 지도 이미지를 제공해요.
-        {location.precision === "area"
-          ? ` 화재 위치는 번지를 찾지 못해 ${location.label} 중심으로 표시했어요.`
-          : " 화재 위치는 문자에 적힌 주소 기준이에요."}
-      </figcaption>
-    </figure>
+  // 카카오 로고가 지도 왼쪽 아래에 표시돼요. 그 위를 가리지 않도록 지도 위에 아무것도 겹치지 않아요.
+  return error ? (
+    <div style={{ ...styles.map, ...styles.empty }}>{error}</div>
+  ) : (
+    <div ref={boxRef} style={styles.map} aria-label="화재 위치와 내 위치를 보여주는 지도" />
   );
 }
 
 const styles = {
-  figure: { margin: 0, position: "relative" },
-  map: { width: "100%", height: "46vh", minHeight: "280px", background: "#e5e7eb" },
-  caption: { padding: "6px 16px 22px", fontSize: "11px", color: "#6b7280", background: "#ffffff" },
-  error: { color: "#b00020", fontWeight: 600, fontSize: "14px" },
-  muted: { color: "#666", fontSize: "14px" },
+  map: { width: "100%", height: "52vh", minHeight: "340px", maxHeight: "480px", background: "#E9EDE5" },
+  empty: { display: "flex", alignItems: "center", justifyContent: "center", padding: "24px", boxSizing: "border-box", textAlign: "center", color: "#374151", fontSize: "14px" },
 };
