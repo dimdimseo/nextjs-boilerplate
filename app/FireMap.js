@@ -1,10 +1,9 @@
 "use client";
-// 카카오 지도에 화재 위치, 내 위치, 거리 점선, 바람 흐름선을 그리는 조각
-// 휴대폰 브라우저에서 실행돼요. 지도 키(NEXT_PUBLIC_KAKAO_JS_KEY)는 등록한 사이트에서만 작동해요.
+// 카카오 지도: 화재 발생지, 내 위치, 바람 흐름선 (디자인은 팀원 버전과 같게)
+// 지도 키(NEXT_PUBLIC_KAKAO_JS_KEY)는 등록한 사이트에서만 작동해요.
 
 import { useEffect, useRef, useState } from "react";
 import { useMyPosition } from "./LocationContext";
-import { distanceKm, destination } from "../lib/geo";
 
 // 카카오 지도 프로그램을 한 번만 불러오기
 let loadingPromise = null;
@@ -26,106 +25,91 @@ function loadKakao(key) {
   return loadingPromise;
 }
 
-// 지도 위 표시 만들기 (글자는 textContent로 넣어 안전하게)
-function el(tag, css, text) {
-  const e = document.createElement(tag);
-  e.style.cssText = css;
-  if (text) e.textContent = text;
-  return e;
-}
-
-// 화재 표시: 빨간 점 + 테두리 있는 알약 모양 글씨
+// 화재 발생지 표시 (팀원 디자인 .incident-marker)
 function fireMarker(text) {
-  const box = el("div", "display:flex;align-items:center;gap:8px;padding:7px 14px 7px 10px;background:#fff;border:2px solid #D24B3E;border-radius:999px;box-shadow:0 0 0 6px rgba(210,75,62,.18),0 2px 6px rgba(0,0,0,.2);font:800 15px system-ui,sans-serif;color:#B42318;white-space:nowrap;");
-  box.appendChild(el("span", "width:14px;height:14px;border-radius:50%;background:#D24B3E;box-shadow:0 0 0 4px rgba(210,75,62,.25);"));
-  box.appendChild(el("span", "", text));
+  const box = document.createElement("div");
+  box.className = "incident-marker";
+  const dot = document.createElement("span");
+  dot.className = "red";
+  const label = document.createElement("span");
+  label.textContent = text;
+  box.append(dot, label);
   return box;
 }
 
-// 내 위치 표시: 파란 점 + 흰 알약 글씨
-function meMarker(text) {
-  const box = el("div", "display:flex;align-items:center;gap:6px;font:700 13px system-ui,sans-serif;");
-  box.appendChild(el("span", "width:16px;height:16px;border-radius:50%;background:#2F6BEA;border:3px solid #fff;box-shadow:0 0 0 6px rgba(47,107,234,.2),0 1px 3px rgba(0,0,0,.3);"));
-  box.appendChild(el("span", "background:#fff;color:#1F3F8F;padding:5px 10px;border-radius:999px;box-shadow:0 2px 6px rgba(0,0,0,.15);white-space:nowrap;", text));
-  return box;
+// 바람 흐름선 (팀원 디자인과 같은 곡선 5개, 바람이 향하는 쪽으로 회전, 점선이 흘러감)
+// 화재 지점 격자의 관측값 1개를 표현한 것이라 실제 연기 확산 범위를 뜻하지는 않아요.
+function windField(toward) {
+  const host = document.createElement("div");
+  host.className = "wind-field";
+  const rotation = toward - 90;
+  const paths = [
+    "M75 93 C104 77 137 100 168 88 S232 78 267 90",
+    "M68 130 C105 111 138 141 175 126 S231 112 279 128",
+    "M68 170 C103 151 145 184 181 166 S239 156 286 168",
+    "M71 213 C115 195 143 223 180 207 S238 200 278 214",
+    "M78 249 C112 232 144 261 178 245 S237 237 269 246",
+  ];
+  host.innerHTML =
+    `<svg width="390" height="350" viewBox="0 0 390 350" aria-hidden="true">` +
+    `<defs><marker id="compassWindArrow8" viewBox="0 0 12 12" markerWidth="8" markerHeight="8" refX="10" refY="6" orient="auto" markerUnits="userSpaceOnUse"><path d="M1 2 L10 6 L1 10 Z" fill="#3489e6"/></marker></defs>` +
+    `<g transform="rotate(${rotation} 195 175)" fill="none" stroke="#3489e6" stroke-linecap="round" stroke-linejoin="round">` +
+    paths
+      .map(
+        (d, i) =>
+          `<path d="${d}" class="wind-dash" style="animation-delay:-${(i * 0.37).toFixed(2)}s" stroke-width="${i === 2 ? 3.1 : 2.6}" stroke-dasharray="15 23" opacity="${i === 2 ? 0.86 : 0.72}" marker-end="url(#compassWindArrow8)"/>`
+      )
+      .join("") +
+    `</g></svg>`;
+  return host;
 }
 
-// 거리 표시: 검은 알약
-function distanceLabel(text) {
-  return el("div", "background:#111418;color:#fff;padding:4px 10px;border-radius:999px;font:700 12px system-ui,sans-serif;white-space:nowrap;", text);
-}
-
-export default function FireMap({ location, wind, height = null, dragging = false }) {
+export default function FireMap({ location, wind, height, settled = true }) {
   const { position } = useMyPosition();
   const boxRef = useRef(null);
   const mapRef = useRef(null);
-  const drawnRef = useRef([]); // 지금 지도에 올라간 표시들 (다시 그릴 때 지우기 위해)
+  const drawnRef = useRef([]);
   const [error, setError] = useState(null);
 
-  // 지도 그리기: 화재 표시 + (내 위치가 있으면) 내 위치, 점선, 거리 + 연기 화살표
   function draw() {
     const kakao = window.kakao;
     const map = mapRef.current;
     if (!kakao || !map || !location) return;
 
-    drawnRef.current.forEach((item) => item.setMap(null));
+    drawnRef.current.forEach((o) => o.setMap(null));
     drawnRef.current = [];
-    const add = (item) => {
-      item.setMap(map);
-      drawnRef.current.push(item);
+    const add = (o) => {
+      o.setMap(map);
+      drawnRef.current.push(o);
     };
-    const toLatLng = (p) => new kakao.maps.LatLng(p.lat, p.lon);
+    const fire = new kakao.maps.LatLng(location.lat, location.lon);
 
-    const fire = toLatLng(location);
-    const bounds = new kakao.maps.LatLngBounds();
-    bounds.extend(fire);
-
-    // 화재 표시 (번지를 못 찾았으면 "대략적 위치")
+    // 화재 발생지 (번지를 못 찾았으면 "대략")
     const fireText = location.precision === "area" ? `${location.label} 중심 (대략)` : "화재 발생지";
-    add(new kakao.maps.CustomOverlay({ position: fire, content: fireMarker(fireText), xAnchor: 0.12, yAnchor: 0.5, zIndex: 3 }));
+    add(new kakao.maps.CustomOverlay({ position: fire, content: fireMarker(fireText), xAnchor: 0.5, yAnchor: 0.5, zIndex: 7 }));
 
-    // 내 위치, 점선, 거리
-    if (position) {
-      const me = toLatLng(position);
-      bounds.extend(me);
-      const meText = position.source === "place" ? `${position.label} 중심` : "내 위치";
-      add(new kakao.maps.CustomOverlay({ position: me, content: meMarker(meText), xAnchor: 0.08, yAnchor: 0.5, zIndex: 3 }));
-      add(new kakao.maps.Polyline({ path: [me, fire], strokeWeight: 2, strokeColor: "#111418", strokeOpacity: 0.8, strokeStyle: "dash" }));
-      const km = distanceKm(position, location);
-      const mid = { lat: (position.lat + location.lat) / 2, lon: (position.lon + location.lon) / 2 };
-      add(new kakao.maps.CustomOverlay({ position: toLatLng(mid), content: distanceLabel(`약 ${km.toFixed(1)} km`), yAnchor: 0.5, zIndex: 2 }));
-    }
-
-    // 화면 맞추기: 내 위치가 있으면 둘 다 보이게(위쪽은 지도 위 카드들만큼 여백), 없으면 화재 중심으로
-    if (position) {
-      map.setBounds(bounds, 200, 48, 48, 48);
-    } else {
-      map.setLevel(4);
-      map.setCenter(fire);
-    }
-
-    // 바람 흐름선: 화재 지점 주변에 바람이 향하는 방향으로 점선 화살표 여러 개
-    // (화재 지점 격자 관측값 1개를 표현한 것이라 지역별 바람 차이를 뜻하지는 않아요)
+    // 바람 흐름선
     if (wind && !wind.error && !wind.isCalm) {
-      const b = map.getBounds();
-      const sw = b.getSouthWest();
-      const ne = b.getNorthEast();
-      const latSpan = ne.getLat() - sw.getLat();
-      const lonSpan = ne.getLng() - sw.getLng();
-      const spanKm = distanceKm({ lat: sw.getLat(), lon: sw.getLng() }, { lat: ne.getLat(), lon: ne.getLng() });
-      const len = spanKm * 0.12;
-      for (const i of [-1, 0, 1]) {
-        for (const j of [-1, 0, 1]) {
-          if (i === 0 && j === 0) continue; // 화재 표시 바로 위는 비우기
-          const start = { lat: location.lat + i * latSpan * 0.22, lon: location.lon + j * lonSpan * 0.3 };
-          const end = destination(start, wind.smokeTo, len);
-          add(new kakao.maps.Polyline({ path: [toLatLng(start), toLatLng(end)], strokeWeight: 3, strokeColor: "#4C7DF0", strokeOpacity: 0.75, strokeStyle: "dash", endArrow: true, zIndex: 1 }));
-        }
-      }
+      add(new kakao.maps.CustomOverlay({ position: fire, content: windField(wind.smokeTo), xAnchor: 0.5, yAnchor: 0.5, zIndex: 2 }));
+    }
+
+    // 내 위치 (GPS는 파란 점, 동네를 고른 경우는 보라 점)
+    if (position) {
+      const me = new kakao.maps.LatLng(position.lat, position.lon);
+      const dot = document.createElement("div");
+      dot.className = "person-marker" + (position.source === "place" ? " demo" : "");
+      add(new kakao.maps.CustomOverlay({ position: me, content: dot, yAnchor: 0.5, zIndex: 8 }));
+      const bounds = new kakao.maps.LatLngBounds();
+      bounds.extend(fire);
+      bounds.extend(me);
+      map.setBounds(bounds, 190, 45, 90, 45); // 위쪽은 헤더·알림·풍향 카드만큼 여백
+    } else {
+      map.setLevel(5);
+      map.setCenter(fire);
     }
   }
 
-  // 처음 한 번: 카카오 지도 불러와서 만들기
+  // 처음 한 번: 지도 만들기
   useEffect(() => {
     if (!location) return;
     const key = process.env.NEXT_PUBLIC_KAKAO_JS_KEY;
@@ -139,7 +123,7 @@ export default function FireMap({ location, wind, height = null, dragging = fals
         if (cancelled || !boxRef.current) return;
         mapRef.current = new kakao.maps.Map(boxRef.current, {
           center: new kakao.maps.LatLng(location.lat, location.lon),
-          level: 6,
+          level: 5,
         });
         draw();
       })
@@ -154,37 +138,25 @@ export default function FireMap({ location, wind, height = null, dragging = fals
     draw();
   }, [position, wind]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // 지도 크기가 바뀌면 카카오 지도에 알려주고(relayout) 표시들이 다 보이게 다시 맞추기
+  // 시트가 멈춘 뒤 지도 높이가 바뀌면 카카오 지도에 알려주고 다시 맞추기
   useEffect(() => {
     const map = mapRef.current;
-    if (!map) return;
-    const timer = setTimeout(() => {
+    if (!map || !settled) return;
+    const t = setTimeout(() => {
       map.relayout();
-      if (!dragging) draw();
-    }, dragging ? 0 : 280); // 크기 변화 애니메이션이 끝난 뒤
-    return () => clearTimeout(timer);
-  }, [height, dragging]); // eslint-disable-line react-hooks/exhaustive-deps
+      draw();
+    }, 300);
+    return () => clearTimeout(t);
+  }, [height, settled]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  if (!location) {
+  // 카카오 로고가 지도 왼쪽 아래에 보이도록, 지도는 시트 위쪽까지만 차지해요
+  const style = { height: height ? `${height}px` : "60dvh" };
+  if (!location || error) {
     return (
-      <div style={{ ...styles.map, ...styles.empty }}>
-        화재 위치를 찾지 못해 지도를 표시할 수 없어요. 아래 공식 안내의 장소를 확인하세요.
+      <div className="map-canvas" style={{ ...style, display: "grid", placeItems: "center", padding: "24px", textAlign: "center", color: "#617184", fontSize: "13px" }}>
+        {error || "화재 위치를 찾지 못해 지도를 표시할 수 없어요."}
       </div>
     );
   }
-
-  // 카카오 로고가 지도 왼쪽 아래에 표시돼요. 그 위를 가리지 않도록 지도 위에 아무것도 겹치지 않아요.
-  const sized = height
-    ? { height: `${height}px`, minHeight: 0, maxHeight: "none", transition: dragging ? "none" : "height 0.25s ease" }
-    : {};
-  return error ? (
-    <div style={{ ...styles.map, ...sized, ...styles.empty }}>{error}</div>
-  ) : (
-    <div ref={boxRef} style={{ ...styles.map, ...sized }} aria-label="화재 위치와 내 위치를 보여주는 지도" />
-  );
+  return <div ref={boxRef} className="map-canvas" style={style} aria-label="양주시 재난 지도" />;
 }
-
-const styles = {
-  map: { width: "100%", height: "52vh", minHeight: "340px", maxHeight: "480px", background: "#E9EDE5" },
-  empty: { display: "flex", alignItems: "center", justifyContent: "center", padding: "24px", boxSizing: "border-box", textAlign: "center", color: "#374151", fontSize: "14px" },
-};

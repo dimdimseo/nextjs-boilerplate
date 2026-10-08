@@ -1,0 +1,407 @@
+/* =====================================================================
+   양주 재난나침반 디자인 (팀원 index.html의 CSS를 그대로 옮김)
+   아래 "Next.js 버전 추가" 부분만 우리 화면 구조에 맞춰 덧붙였어요.
+   ===================================================================== */
+
+
+
+
+:root{--ink:#152535;--sub:#617184;--red:#e84c47;--blue:#2875df;--line:#e7ebef;--soft:#f6f8fa}
+
+*{box-sizing:border-box}html,body{height:100%;margin:0;overflow:hidden;background:#e9edf2;color:var(--ink);font-family:'Pretendard Variable','Pretendard',-apple-system,BlinkMacSystemFont,'Apple SD Gothic Neo','Segoe UI',sans-serif;letter-spacing:-.025em}button,input,textarea{font:inherit}button{cursor:pointer}.app{position:relative;width:min(100%,430px);height:100dvh;overflow:hidden;margin:auto;background:#f3f5f7;box-shadow:0 10px 50px #22304620}.map-canvas{position:absolute;left:0;right:0;top:0;width:100%;z-index:1;background:#e9edf2}
+
+.header{position:absolute;z-index:12;top:max(13px,env(safe-area-inset-top));left:15px;right:15px;height:53px;display:flex;align-items:center;gap:10px;padding:0 14px;border-radius:15px;background:#fffffff7;box-shadow:0 5px 23px #27344720;border:1px solid #fff}.logo{width:29px;height:29px;border-radius:9px;display:grid;place-items:center;background:#243c59;color:white}.brand-name{font-size:16px;font-weight:800;flex:1}.demotag{font-size:10px;padding:5px 7px;border-radius:7px;color:#6b7786;background:#eff2f5;font-weight:650}
+
+/* 홈: 지도를 최대한 노출하고 정보는 짧게 */
+
+.alert-bar{position:absolute;top:77px;left:15px;right:15px;z-index:8;border:1px solid #ffdfdd;background:#fffffff5;border-radius:13px;box-shadow:0 5px 19px #19253814;padding:11px 12px;text-align:left;display:flex;align-items:center;gap:9px}.alert-dot{width:8px;height:8px;border-radius:50%;background:var(--red);box-shadow:0 0 0 4px #ffe6e5;flex:none}.alert-body{min-width:0;flex:1}.alert-title{font-size:13px;font-weight:750;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.alert-time{font-size:11px;color:#758292;margin-top:3px}.alert-arrow{font-size:20px;color:#8b96a4}
+
+.wind-chip{position:absolute;z-index:7;top:151px;left:15px;background:#ffffffef;border:1px solid #e6ebf2;border-radius:13px;padding:10px 12px;box-shadow:0 4px 17px #1423321b;display:flex;align-items:center;gap:9px;max-width:240px}.wind-logo{width:29px;height:29px;border-radius:10px;background:#eaf3ff;color:#2875df;display:grid;place-items:center;font-size:20px}.wind-chip strong{display:block;font-size:13px}.wind-chip small{display:block;font-size:11px;color:#64768b;margin-top:3px}
+
+.map-buttons{position:absolute;right:15px;z-index:8;display:flex;align-items:flex-end;flex-direction:column;gap:9px;transition:bottom .25s}.map-buttons button{background:#fffffffa;border:1px solid #e8edf1;box-shadow:0 3px 15px #1b263823;color:#2a4157}.demo-button{padding:10px 12px;border-radius:22px;font-size:12px;font-weight:700}.loc-button{width:51px;height:51px;border-radius:50%;display:grid;place-items:center}.loc-button svg{width:25px;height:25px}
+
+.map-legend{position:absolute;z-index:7;left:15px;display:flex;gap:11px;align-items:center;background:#fffffff2;border:1px solid #e9edf1;border-radius:11px;padding:9px 11px;font-size:11px;font-weight:700;color:#536174;box-shadow:0 4px 14px #13253617;transition:bottom .25s,opacity .2s}.map-legend span{display:flex;align-items:center;gap:4px}.dot{display:inline-block;width:9px;height:9px;border-radius:50%}.dot.you{background:#2876d9}.dot.fire{background:#e84945}.flow-glyph{font-weight:900;color:#247ce7;font-size:17px}
+
+.sheet{position:absolute;z-index:9;left:0;right:0;bottom:65px;background:#fff;border-radius:24px 24px 0 0;height:min(72dvh,720px);box-shadow:0 -4px 24px #182b3d26;display:flex;flex-direction:column;will-change:transform}.handle{height:43px;display:grid;place-items:center;flex:none;cursor:grab;touch-action:none;user-select:none}.handle::after{content:'';width:39px;height:5px;background:#d4dce5;border-radius:10px}.sheet-summary{padding:0 19px 14px;flex:none}.headline{display:flex;align-items:center;gap:6px;color:#d94541;font-size:12px;font-weight:780}.headline .chip{width:8px;height:8px;background:#e84c47;border-radius:50%}.mini-demo{margin-left:auto;font-size:10px;color:#7c8998;background:#f1f4f7;padding:5px 7px;border-radius:9px}.metric-row{display:flex;align-items:baseline;gap:10px;margin-top:6px}.metric{font-size:34px;line-height:1.12;letter-spacing:-.06em;font-weight:830;font-variant-numeric:tabular-nums}.direction{font-size:14px;color:#57697b;font-weight:650}.sub{font-size:12px;color:#788493;margin-top:5px}.quick-guide{background:#f2f7fd;border:1px solid #e4effc;border-radius:12px;margin-top:12px;padding:12px 13px}.quick-label{font-weight:760;font-size:12px;color:#3169a5;margin-bottom:5px}.quick-text{font-size:14px;line-height:1.52;color:#243d57;font-weight:620}.quick-note{font-size:11px;line-height:1.4;color:#7a8796;margin-top:6px}.open-detail{border:0;background:transparent;color:#316cae;font-size:12px;font-weight:750;padding:9px 0 0}.sheet-detail{flex:1;min-height:0;overflow:auto;overscroll-behavior:contain;padding:9px 19px 20px;border-top:1px solid #edf0f4}.section{margin:7px 0 20px}.section h3{font-size:15px;margin:0 0 11px}.section small{color:#8a97a5;font-weight:450;font-size:11px}.message{font-size:14px;line-height:1.7;color:#46576a;background:#f6f8fa;border:1px solid #eef0f3;border-radius:13px;padding:14px}.advice{font-size:14px;line-height:1.75;white-space:pre-line;color:#3d5064}.caution{color:#8291a0;font-size:11px;line-height:1.55;margin-top:12px}.official{font-size:12px;color:#246db6;text-decoration:none;font-weight:720}
+
+.nav{position:absolute;z-index:15;bottom:0;left:0;right:0;height:calc(65px + env(safe-area-inset-bottom));padding:4px 12px env(safe-area-inset-bottom);background:#fffffffb;border-top:1px solid #edf0f3;display:flex;justify-content:space-around}.nav button{border:0;background:transparent;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:5px 15px;color:#8d99a8;font-size:11px;font-weight:730}.nav button svg{width:23px;height:23px}.nav button.active{color:#2875db}
+
+/* 두 번째 화면 - 기록 */
+
+.records{position:absolute;inset:0 0 65px;z-index:4;background:#f5f7fa;overflow-y:auto;padding:81px 16px 24px;display:none}.app.records-mode .records{display:block}.app.records-mode .sheet,.app.records-mode .alert-bar,.app.records-mode .wind-chip,.app.records-mode .map-legend,.app.records-mode .map-buttons{display:none}.records-title{font-size:23px;font-weight:820;margin:6px 0}.records-sub{font-size:13px;color:#788596;line-height:1.55;margin-bottom:18px}.record-card{width:100%;border:1px solid #e7eaee;border-radius:16px;text-align:left;background:#fff;padding:16px;margin-bottom:10px;box-shadow:0 3px 12px #112b4110}.record-card .row{display:flex;justify-content:space-between;gap:8px;align-items:center}.record-card strong{font-size:15px}.record-card p{font-size:13px;color:#647185;line-height:1.55;margin:8px 0 0}.record-date{font-size:11px;color:#8e99a6}.tiny-pill{font-size:10px;padding:4px 7px;background:#f1f4f6;color:#637083;border-radius:7px;white-space:nowrap}.entry{border:1px solid #e2e8ee;background:#fff;border-radius:16px;padding:15px;margin-top:20px}.entry h3{font-size:15px;margin:0 0 9px}.entry label{display:block;font-size:12px;color:#627185;font-weight:650;margin:10px 0 6px}.entry input,.entry textarea{display:block;width:100%;border-radius:9px;border:1px solid #dfe5ed;padding:10px 12px;color:#25394e;font-size:13px;background:#fbfcfd}.entry textarea{min-height:89px;resize:vertical}.primary{width:100%;padding:12px;border:none;background:#246bd1;color:white;border-radius:11px;margin-top:12px;font-weight:750}.entry-notice{font-size:11px;line-height:1.5;color:#8793a0;margin-top:9px}
+
+.incident-marker{display:inline-flex;align-items:center;gap:6px;padding:6px 9px;background:#fff;border:1px solid #f5c4c1;border-radius:20px;color:#bd3833;box-shadow:0 3px 11px #1d293b27;font-size:12px;font-weight:800;white-space:nowrap;pointer-events:none}.incident-marker .red{height:11px;width:11px;border-radius:50%;background:#e84843;box-shadow:0 0 0 4px #fee4e3}.person-marker{height:19px;width:19px;border-radius:50%;background:#2477e2;border:4px solid white;box-shadow:0 1px 8px #13273b77}.person-marker.demo{background:#8368d6}.wind-field{width:325px;height:250px;pointer-events:none}.wind-dash{animation:windmotion 2.6s linear infinite}@keyframes windmotion{from{stroke-dashoffset:160}to{stroke-dashoffset:0}}@media(prefers-reduced-motion:reduce){.wind-dash{animation:none}.sheet,.map-buttons,.map-legend{transition:none}}
+
+@media(max-height:670px){.sheet{height:78dvh}.wind-chip{top:137px}}
+
+
+
+/* V5: readable iOS map-focused layout */
+
+.sheet{height:min(70dvh,660px);max-height:calc(100dvh - 194px);border-radius:22px 22px 0 0}
+
+.sheet-summary{padding:0 19px 9px}
+
+.metric{font-size:38px}
+
+.quick-guide{padding:13px 14px;margin-top:10px}
+
+.quick-label{font-size:13px}.quick-text{font-size:15px;line-height:1.5}.quick-note{font-size:11px}
+
+.sheet-detail{padding:11px 18px 24px}
+
+.section h3{font-size:16px}.message{font-size:14.5px;line-height:1.55}
+
+.advice{white-space:normal;font-size:14.5px;line-height:1.6}
+
+.advice-card{padding:13px 14px;margin:0 0 9px;border:1px solid #e8edf2;border-radius:13px;background:#fff}
+
+.advice-card.primary{background:#f1f6fd;border-color:#d9e8fa;color:#243f5f}
+
+.advice-card .advice-title{display:flex;gap:8px;align-items:center;font-weight:770;font-size:14px;margin-bottom:6px}
+
+.advice-card .advice-num{display:grid;place-items:center;background:#e2edfb;color:#265f9c;border-radius:8px;min-width:24px;height:24px;font-size:12px}
+
+.advice-card .advice-body{color:#485b6d;font-size:14px;line-height:1.52}
+
+.guide-context{font-size:12px;color:#586b7e;background:#f4f7fa;padding:9px 11px;border-radius:10px;margin-bottom:12px}
+
+.wind-logo svg{width:24px;height:24px;display:block;transform:rotate(var(--wind-angle,0deg));transition:transform .4s}
+
+.wind-logo{font-size:initial}
+
+.map-legend{font-size:12px;gap:10px;padding:9px}
+
+.wind-field{width:390px;height:350px;opacity:1;pointer-events:none}
+
+.alert-title{font-size:14px}.alert-time{font-size:12px}
+
+@media(max-width:360px){.sheet-summary{padding-left:14px;padding-right:14px}.quick-text{font-size:14px}.header,.alert-bar{left:10px;right:10px}}
+
+
+
+/* V6: 탭으로 정보를 선택하는 바텀시트 */
+
+.alert-time{display:block;margin-top:5px;font-size:12px;line-height:1.3}
+
+.alert-title{display:block;font-size:14px;line-height:1.3}
+
+.alert-body{min-width:0}.alert-bar{min-height:57px;padding:10px 12px;align-items:center}
+
+.headline{font-size:15px;gap:8px}.headline .chip{width:10px;height:10px}
+
+.map-legend{gap:12px;align-items:center}.map-legend span{display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
+
+.legend-wind{width:17px;height:17px;flex:none;display:block}
+
+.sheet{height:min(76dvh,760px)}
+
+.sheet-summary{padding-bottom:10px}
+
+.sheet-detail{padding:0 16px 16px;overflow-y:auto;overscroll-behavior:contain}
+
+.detail-tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));position:sticky;top:0;z-index:2;background:#fff;border-bottom:1px solid #e8edf2;padding-top:8px;padding-bottom:7px;gap:5px;margin-bottom:14px}
+
+.detail-tab{border:0;border-radius:10px;background:#f1f4f7;color:#6b7b8e;font-size:13px;font-weight:750;padding:12px 2px;white-space:nowrap}
+
+.detail-tab.active{background:#e9f2ff;color:#2369c3}
+
+.detail-panel[hidden]{display:none!important}
+
+.detail-panel{min-height:175px;padding:0 2px 16px}
+
+.panel-title{font-size:17px;font-weight:800;color:#213448;margin-bottom:5px}
+
+.panel-description{font-size:13px;line-height:1.5;color:#78869a;margin:0 0 14px}
+
+.context-row{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;padding:13px 4px;border-bottom:1px solid #edf0f5;font-size:13.5px}
+
+.context-row span{color:#67778a}.context-row strong{color:#1d3450;text-align:right;font-size:14px}
+
+.advice-card{margin-bottom:10px}.advice-card .advice-body{font-size:14px}
+
+.message{font-size:15px;line-height:1.65}.caution{font-size:12px;line-height:1.55}
+
+@media(max-width:360px){.detail-tab{font-size:12px;padding:11px 1px}}
+
+/* style continuation */
+
+#expandDetails{display:none!important}
+
+.wind-dash{animation:windmotion 2.2s linear infinite}
+
+@media (prefers-reduced-motion:reduce){.wind-dash{animation:none}}
+
+
+
+/* 사용자 제공 로고 */
+
+.header .logo{width:36px;height:36px;min-width:36px;border-radius:10px;background:transparent;overflow:hidden;display:flex;align-items:center;justify-content:center}
+
+.header .logo img{width:100%;height:100%;display:block;object-fit:contain}
+
+/* 화재 발생지 마커 강조 */
+
+.incident-marker {
+
+    display: inline-flex;
+
+    align-items: center;
+
+    gap: 8px;
+
+    padding: 10px 14px;
+
+    background: #fff;
+
+    border: 2px solid #ed4540;
+
+    border-radius: 16px;
+
+    box-shadow:
+
+        0 5px 20px rgba(220, 35, 30, .30),
+
+        0 0 0 5px rgba(237, 69, 64, .12);
+
+    color: #c62e29;
+
+    font-size: 14px;
+
+    font-weight: 850;
+
+    white-space: nowrap;
+
+    pointer-events: none;
+
+}
+
+
+
+.incident-marker .red {
+
+    width: 16px;
+
+    height: 16px;
+
+    flex-shrink: 0;
+
+    border-radius: 50%;
+
+    background: #ed4540;
+
+    box-shadow: 0 0 0 5px #ffe5e3;
+
+}
+
+/* 지도 상단 기상 정보 간결하게 */
+
+.wind-chip {
+
+    top: 149px;
+
+    max-width: none;
+
+    padding: 7px 11px;
+
+    gap: 6px;
+
+    border-radius: 999px;
+
+    box-shadow: 0 2px 10px rgba(20, 35, 55, 0.10);
+
+}
+
+
+
+.wind-logo {
+
+    width: 20px;
+
+    height: 20px;
+
+    border-radius: 50%;
+
+    background: transparent;
+
+}
+
+
+
+.wind-logo svg {
+
+    width: 19px;
+
+    height: 19px;
+
+}
+
+
+
+.wind-chip strong {
+
+    display: inline;
+
+    font-size: 11px;
+
+    white-space: nowrap;
+
+}
+
+
+
+.wind-chip small {
+
+    display: none;
+
+}
+
+/* 상단 재난 알림 카드 강조 */
+
+.alert-bar {
+
+    background: #FFF0EF;
+
+    border: 1.5px solid #F5C1BD;
+
+    box-shadow: 0 4px 14px rgba(200, 60, 50, 0.10);
+
+}
+
+
+
+.alert-title {
+
+    color: #9F2E2A;
+
+    font-weight: 800;
+
+}
+
+
+
+.alert-time {
+
+    color: #AB625E;
+
+}
+
+
+
+.alert-dot {
+
+    background: #E0443E;
+
+    box-shadow: 0 0 0 4px #FFDAD7;
+
+}
+
+
+
+.alert-arrow {
+
+    color: #D65A55;
+
+}
+
+/* 재난별 시연 링크 생성 결과 */
+.share-result{margin-top:12px;padding:12px;border-radius:12px;background:#eef6ff;border:1px solid #cbdff8;line-height:1.5}
+.share-result[hidden]{display:none!important}
+.share-result strong{display:block;color:#1e548f;font-size:13px;margin-bottom:7px}
+.share-result input{width:100%;font-size:12px;background:white;color:#24415c;overflow:hidden;text-overflow:ellipsis}
+.share-result button{background:#276ece;color:#fff;border:0;border-radius:9px;padding:9px 12px;margin-top:8px;font-size:12px;font-weight:750}
+.record-card{cursor:default}
+.record-open{display:block;width:100%;text-align:left;border:0;background:transparent;padding:0;cursor:pointer;color:inherit}
+.record-share{margin-top:11px;padding:9px 12px;border:1px solid #b6d3fa;border-radius:9px;background:#ecf5ff;color:#225ca1;font-size:12px;font-weight:750}
+.record-share:disabled{opacity:.7}
+.record-link-output{margin-top:9px;padding:9px;background:#f4f8fe;border-radius:10px}
+.record-link-output[hidden]{display:none}
+.record-link-output textarea{display:block;width:100%;resize:vertical;word-break:break-all;font-size:11px;border:1px solid #dae5f3;border-radius:7px;padding:8px;color:#213a58;background:white}
+.record-link-output a,.share-result a{display:block;margin-top:7px;color:#226cc1;font-size:12px;font-weight:700;text-decoration:underline;word-break:break-all}
+.share-result small{display:block;font-size:11px;color:#58718a;margin-top:7px}
+/* 가상 내 위치 마커 강조 */
+.person-marker.demo {
+    position: relative;
+    width: 26px;
+    height: 26px;
+    background: #7954d4;
+    border: 4px solid #ffffff;
+    border-radius: 50%;
+    box-shadow:
+        0 0 0 8px rgba(121, 84, 212, 0.22),
+        0 3px 12px rgba(67, 40, 125, 0.35);
+}
+
+
+/* =====================================================================
+   Next.js 버전 추가 (원본에 없는 우리 기능용, 원본 값과 같은 톤으로)
+   ===================================================================== */
+
+/* 재난 기록·기본 화면은 별도 주소라 항상 보이게 */
+.records{display:block}
+
+/* 아래 탭바: 원본 button 스타일을 링크에도 */
+.nav a{border:0;background:transparent;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:5px 15px;color:#8d99a8;font-size:11px;font-weight:730;text-decoration:none}
+.nav a svg{width:23px;height:23px}
+.nav a.active{color:#2875db}
+
+/* 헤더 오른쪽 공유 버튼 */
+.share-btn{width:34px;height:34px;border-radius:10px;border:1px solid #e8edf1;background:#fff;display:grid;place-items:center;color:#2a4157}
+.share-btn svg{width:18px;height:18px}
+.share-toast{position:absolute;right:0;top:44px;white-space:nowrap;background:#152535;color:#fff;border-radius:9px;padding:6px 9px;font-size:11px}
+
+/* 지도 버튼 영역의 동네 선택 (원본 '양주시 가상 위치' 버튼 모양) */
+.place-select{appearance:none;-webkit-appearance:none;padding:10px 30px 10px 12px;border-radius:22px;font-size:12px;font-weight:700;background:#fffffffa url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%232a4157' stroke-width='3' stroke-linecap='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E") no-repeat right 11px center;border:1px solid #e8edf1;box-shadow:0 3px 15px #1b263823;color:#2a4157}
+.loc-status{max-width:220px;font-size:11px;line-height:1.4;color:#9f2e2a;background:#fff0ef;border:1px solid #f5c1bd;border-radius:10px;padding:7px 9px;text-align:left}
+
+/* 요약 아래 정확도 안내, 주의 표시 */
+.sub-note{font-size:11px;color:#8a97a5;margin-top:4px}
+.alert-strip{margin-top:10px;padding:10px 12px;border-radius:12px;background:#fff0ef;border:1px solid #f5c1bd;color:#9f2e2a;font-size:13px;font-weight:780}
+
+/* 행동 안내 카드 안의 '구체적으로'와 출처 */
+.advice-card.alert{background:#fff0ef;border-color:#f5c1bd}
+.advice-card.alert .advice-num{background:#ffdad7;color:#9f2e2a}
+.advice-detail-title{font-size:12px;font-weight:750;color:#586b7e;margin:10px 0 4px}
+.advice-detail{margin:0;padding-left:18px;list-style:disc;color:#3d5064;font-size:13.5px;line-height:1.55}
+.advice-source{font-size:11px;color:#8a97a5;margin-top:7px;line-height:1.45}
+
+/* 있는 곳에 따라 */
+.where-title{font-size:15px;font-weight:800;margin:18px 0 9px}
+.where-tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px;margin-bottom:9px}
+.where-tab{border:0;border-radius:10px;background:#f1f4f7;color:#6b7b8e;font-size:12.5px;font-weight:750;padding:11px 2px}
+.where-tab.active{background:#152535;color:#fff}
+.where-card{padding:13px 14px;border-radius:13px;background:#f6f8fa;border:1px solid #eef0f3}
+
+/* 재난문자 탭: 여러 문자, 위험 요인 */
+.message-time{font-size:12px;color:#8a97a5;margin:14px 0 6px}
+.message-time:first-of-type{margin-top:0}
+.hazard-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.hazard-chip{font-size:12px;font-weight:700;padding:5px 9px;border-radius:9px;background:#fff0ef;color:#9f2e2a}
+
+/* 위치·바람 탭: 등록 공장 참고 */
+.factory-card{margin-top:16px;padding:13px 14px;border-radius:13px;background:#f6f8fa;border:1px solid #eef0f3}
+.factory-card strong{display:block;font-size:13px;margin-bottom:5px}
+.factory-card p{margin:0;font-size:13px;line-height:1.55;color:#46576a}
+.factory-card small{display:block;margin-top:6px;font-size:11px;color:#8a97a5}
+
+/* 시트 맨 아래 출처 */
+.sheet-footer{margin-top:18px;padding-top:12px;border-top:1px solid #edf0f4}
+.sheet-footer p{font-size:11px;line-height:1.55;color:#8291a0;margin:0 0 5px}
+
+/* 재난 기록: 날짜 고르기 */
+.records-filter{display:grid;grid-template-columns:repeat(3,minmax(0,1fr)) auto;gap:6px;align-items:end;background:#fff;border:1px solid #e7eaee;border-radius:16px;padding:12px;margin-bottom:12px;box-shadow:0 3px 12px #112b4110}
+.records-filter label{display:flex;flex-direction:column;gap:5px;font-size:11px;color:#627185;font-weight:650}
+.records-filter select{appearance:none;-webkit-appearance:none;border-radius:9px;border:1px solid #dfe5ed;padding:10px;color:#25394e;font-size:13px;background:#fbfcfd}
+.records-filter button{border:none;background:#246bd1;color:#fff;border-radius:9px;padding:10px 14px;font-weight:750;font-size:13px}
+.records-month{display:flex;justify-content:space-between;align-items:center;margin:4px 2px 12px}
+.records-month a{font-size:12px;font-weight:750;color:#226cc1;text-decoration:none;padding:8px 2px}
+.records-month strong{font-size:14px}
+.records-count{font-size:12px;color:#788596;margin:0 2px 10px}
+a.record-card{display:block;color:inherit;text-decoration:none}
+.tiny-pill.now{background:#fff0ef;color:#9f2e2a}
+.empty-card{background:#fff;border:1px solid #e7eaee;border-radius:16px;padding:22px 16px;text-align:center;color:#647185;font-size:13px;line-height:1.6}
+.empty-card strong{display:block;color:#152535;font-size:16px;margin-bottom:6px}
+select{font:inherit}
+.headline.done{color:#617184}.headline.done .chip{background:#9aa3ad}
+.fire-label-area{color:#8a5a00}
+a.alert-bar{color:inherit;text-decoration:none}

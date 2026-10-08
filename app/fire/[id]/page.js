@@ -8,7 +8,6 @@ import { RECENT_DAYS } from "../../../lib/config";
 import { isCurrent } from "../../../lib/incidents";
 import { addDaysYmd, recentStart } from "../../../lib/dates";
 import FireView from "../../FireView";
-import Footer from "../../Footer";
 import { incidentTitle } from "../../ui";
 
 export const dynamic = "force-dynamic";
@@ -53,21 +52,14 @@ export default async function FirePage({ params, searchParams }) {
 
   if (error || !data?.incident) {
     return (
-      <main style={s.page}>
-        <p style={s.msg}>
-          {error
-            ? `정보를 불러오지 못했어요. (${error})`
-            : "이 화재를 찾지 못했어요. 아래 재난 기록 탭에서 날짜로 찾아보세요."}
-        </p>
-        <Footer />
+      <main className="records">
+        <div className="empty-card">
+          <strong>{error ? "정보를 불러오지 못했어요" : "이 화재를 찾지 못했어요"}</strong>
+          {error ? error : "아래 재난 기록 탭에서 날짜로 찾아보세요."}
+        </div>
       </main>
     );
   }
 
   return <FireView incident={data.incident} stale={!isCurrent(data.incident)} />;
 }
-
-const s = {
-  page: { maxWidth: "560px", margin: "0 auto", padding: "24px 16px 0" },
-  msg: { margin: "0 0 12px", fontWeight: 600 },
-};
