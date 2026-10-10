@@ -23,8 +23,6 @@ export default function FireView({ incident, stale }) {
   const placeText = place ? `${place}${incident.modifier ? ` ${incident.modifier}` : ""}` : "위치 확인 필요";
   const timeOf = (d) => formatKst(d).split(" ")[2];
   const timeText = dotDate(first.sentDate, incident.occurredTime ?? timeOf(first.sentDate));
-  const ymd = ymdOf(first.sentDate);
-  const recordsHref = `/records?y=${Number(ymd.slice(0, 4))}&m=${Number(ymd.slice(4, 6))}`;
 
   // 재난문자 탭
   const messages = [latest, ...incident.earlier]; // 최신순
@@ -90,7 +88,6 @@ export default function FireView({ incident, stale }) {
         timeText={timeText}
         stale={stale}
         done={incident.status === "완진"}
-        recordsHref={recordsHref}
         actions={actions}
         hazards={incident.hazards}
         modifier={incident.modifier}

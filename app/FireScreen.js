@@ -3,7 +3,6 @@
 // 시트를 움직여 멈추면 지도 높이를 시트 위쪽까지로 맞춰서 카카오 로고가 가려지지 않게 해요.
 
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import Link from "next/link";
 import FireMap from "./FireMap";
 import ActionGuide from "./ActionGuide";
 import RelationTable from "./RelationTable";
@@ -14,7 +13,7 @@ import { PLACES } from "../lib/places";
 const NAV = 65; // 아래 탭바 높이
 
 export default function FireScreen(props) {
-  const { location, wind, placeText, timeText, stale, done, recordsHref, actions, hazards, modifier, messagePanel, factoryNode, footer } = props;
+  const { location, wind, placeText, timeText, stale, done, actions, hazards, modifier, messagePanel, factoryNode, footer } = props;
   const { position, status, message, requestGps, choosePlace } = useMyPosition();
 
   // ----- 시트 위치 (팀원 버전과 같은 멈춤 지점) -----
@@ -135,7 +134,8 @@ export default function FireScreen(props) {
     <>
       <FireMap location={location} wind={wind} height={mapHeight} settled={settled} />
 
-      <Link href={recordsHref} className="alert-bar" aria-label="같은 달 재난 기록 보기">
+      {/* 지도 위 화재 알림 카드 (누르지 않는 정보 표시) */}
+      <div className="alert-bar" role="status">
         <span className="alert-dot" />
         <span className="alert-body">
           <span className="alert-title">화재 · {placeText}</span>
@@ -143,8 +143,7 @@ export default function FireScreen(props) {
             {timeText} · {stale ? "지난 화재" : "진행 중"}
           </span>
         </span>
-        <span className="alert-arrow">›</span>
-      </Link>
+      </div>
 
       {windOk && (
         <div className="wind-chip" aria-label="현재 풍향 정보">
