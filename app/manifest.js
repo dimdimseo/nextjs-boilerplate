@@ -4,13 +4,15 @@
 
 export default function manifest() {
   return {
-    name: "양주 재난나침반", // 설치 화면에 보이는 전체 이름
-    short_name: "재난나침반", // 홈 화면 아이콘 아래 이름 (짧게)
+    name: "양주시 재난나침반", // 설치 화면에 보이는 전체 이름
+    short_name: "양주시 재난나침반", // 홈 화면 아이콘 아래 이름
     description: "양주시 화재 재난문자를 나와의 거리와 바람 방향으로 보여주는 안내 서비스",
-    start_url: "/", // 아이콘을 누르면 열리는 주소
+    id: "/", // 이 앱을 구별하는 이름표 (어느 페이지에서 추가해도 같은 앱)
+    start_url: "/", // 아이콘을 누르면 항상 기본 주소에서 시작 (진행 중 화재가 있으면 그 화재로 이동)
+    scope: "/",
     display: "standalone", // 주소창 없이 앱처럼 열기
-    background_color: "#ffffff",
-    theme_color: "#000000",
+    background_color: "#f5f7fa", // 앱을 열 때 잠깐 보이는 바탕색 (화면 바탕과 같게)
+    theme_color: "#f5f7fa", // 상단 상태 표시줄 색
     lang: "ko",
     icons: [
       { src: "/icon-192.png", sizes: "192x192", type: "image/png" },

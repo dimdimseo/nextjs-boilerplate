@@ -9,7 +9,9 @@ import TabBar from "./TabBar";
 export const metadata = {
   title: "양주 재난나침반",
   description: "양주시 화재 재난문자를 나와의 거리와 바람 방향으로 보여주는 안내 서비스",
-  appleWebApp: { capable: true, title: "양주 재난나침반", statusBarStyle: "default" },
+  // 아이폰 홈 화면 아이콘 아래 이름 (어느 페이지에서 추가해도 이 이름)
+  appleWebApp: { capable: true, title: "양주시 재난나침반", statusBarStyle: "default" },
+  applicationName: "양주시 재난나침반",
 };
 
 export const viewport = {
