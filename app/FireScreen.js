@@ -124,9 +124,11 @@ export default function FireScreen(props) {
     precision =
       location.precision === "area"
         ? `번지를 찾지 못해 ${location.label} 중심까지의 거리예요.`
-        : modifier
-          ? `문자에 '${modifier}'으로 되어 있어 실제 지점과 차이가 있을 수 있어요.`
-          : null;
+        : location.precision === "facility"
+          ? `문자에 적힌 시설(${location.label}) 위치 기준이에요. 터널·도로처럼 긴 시설은 실제 지점과 차이가 있을 수 있어요.`
+          : modifier
+            ? `문자에 '${modifier}'으로 되어 있어 실제 지점과 차이가 있을 수 있어요.`
+            : null;
   }
   const windOk = wind && !wind.error;
 

@@ -85,8 +85,13 @@ export default function FireMap({ location, wind, height, settled = true }) {
     };
     const fire = new kakao.maps.LatLng(location.lat, location.lon);
 
-    // 화재 발생지 (번지를 못 찾았으면 "대략")
-    const fireText = location.precision === "area" ? `${location.label} 중심 (대략)` : "화재 발생지";
+        // 번지·시설로 찾았으면 "화재 발생지", 동·리 중심이면 "○○ 일대"
+    const fireText =
+      location.precision === "area"
+        ? `${location.label} 일대`
+        : location.precision === "facility"
+          ? `화재 발생지 · ${location.label}`
+          : "화재 발생지";
     add(new kakao.maps.CustomOverlay({ position: fire, content: fireMarker(fireText), xAnchor: 0.5, yAnchor: 0.5, zIndex: 7 }));
 
     // 바람 흐름선
@@ -104,8 +109,8 @@ export default function FireMap({ location, wind, height, settled = true }) {
       // 내 위치와 화재를 잇는 점선 + 가운데 거리 표시
       add(new kakao.maps.Polyline({
         path: [me, fire],
-        strokeWeight: 5,
-        strokeColor: "#ff0000",
+        strokeWeight: 3,
+        strokeColor: "#2a4157",
         strokeOpacity: 0.75,
         strokeStyle: "shortdash",
         zIndex: 3,
