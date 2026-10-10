@@ -55,7 +55,7 @@ export default async function Records({ searchParams }) {
   return (
     <main className="records">
       <div className="records-title">재난 기록</div>
-      <div className="records-sub">양주시로 발송된 화재 재난문자를 날짜별로 찾아볼 수 있어요. 누르면 지도와 함께 열려요.</div>
+      <div className="records-sub">공식 재난문자로 받은 재난이에요. 누르면 내 위치 기준 상세 안내를 지도에서 볼 수 있어요.</div>
 
       <form method="get" action="/records" className="records-filter">
         <label>
@@ -113,18 +113,43 @@ export default async function Records({ searchParams }) {
           )}
           {incidents.map((inc) => {
             const current = isCurrent(inc);
-            const first = formatKst(inc.occurredDate);
+            const done = inc.status === "완진";
+            const first = formatKst(inc.occurredDate); // "8월 6일 18:53"
+            const ymd = ymdOf(inc.occurredDate);
+            const dateText = `${ymd.slice(0, 4)}-${ymd.slice(4, 6)}-${ymd.slice(6, 8)} ${inc.occurredTime ?? first.split(" ")[2]}`;
+            // 진행 중: 마지막 안내 24시간 이내 / 진화 완료: 문자에 완진 / 그 외: 지난 화재 (종료를 단정하지 않음)
+            const pill = current ? ["진행 중", "now"] : done ? ["진화 완료", "done"] : ["지난 화재", ""];
+            const text = inc.latest.text;
             return (
-              <Link key={inc.id} href={`/fire/${inc.id}?from=${ymdOf(inc.occurredDate)}`} className="record-card">
-                <div className="row">
-                  <strong>{incidentTitle(inc)}</strong>
-                  <span className={`tiny-pill${current ? " now" : ""}`}>{current ? "진행 중" : "지난 화재"}</span>
-                </div>
-                <div className="record-date">
-                  {first.split(" ").slice(0, 2).join(" ")} {inc.occurredTime ? `${inc.occurredTime} 발생` : `첫 문자 ${first.split(" ")[2]}`}
-                  {" · "}문자 {inc.messageCount}건{inc.status === "완진" ? " · 진화 완료" : ""}
-                </div>
-                <p>{inc.latest.text.length > 70 ? `${inc.latest.text.slice(0, 70)}…` : inc.latest.text}</p>
+              <Link
+                key={inc.id}
+                href={`/fire/${inc.id}?from=${ymd}`}
+                className="rec-card"
+                aria-label={`${incidentTitle(inc)}, ${dateText}, ${pill[0]}. 상세 안내 보기`}
+              >
+                <span className="rec-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="#d24b3e" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M12 3c1 3 4 5 4 9a4 4 0 0 1-8 0c0-2 1-3 2-4 0 2 1 3 2 3 0-3-1-5 0-8z" />
+                  </svg>
+                </span>
+                <span className="rec-main">
+                  <span className="rec-top">
+                    <span>
+                      <span className="rec-title" style={{ display: "block" }}>{incidentTitle(inc)}</span>
+                      <span className="rec-date" style={{ display: "block" }}>{dateText}</span>
+                    </span>
+                    <span className={`rec-pill ${pill[1]}`}>{pill[0]}</span>
+                  </span>
+                  <span className="rec-msg" style={{ display: "block" }}>
+                    {text.length > 110 ? `${text.slice(0, 110)}…` : text}
+                  </span>
+                  {inc.messageCount > 1 && (
+                    <span className="rec-meta" style={{ display: "block" }}>
+                      같은 화재로 발송된 문자 {inc.messageCount}건 중 가장 최근 안내
+                    </span>
+                  )}
+                  <span className="rec-btn">상세 안내 보기</span>
+                </span>
               </Link>
             );
           })}

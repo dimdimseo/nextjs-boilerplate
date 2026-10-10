@@ -417,3 +417,20 @@ a.alert-bar{color:inherit;text-decoration:none}
 /* 내 위치–화재 점선 가운데 거리 표시 */
 .distance-pill{padding:5px 10px;border-radius:999px;background:#fffffffa;border:1px solid #e1e7ee;box-shadow:0 3px 12px #1b263826;color:#2a4157;font-size:12px;font-weight:780;white-space:nowrap;font-variant-numeric:tabular-nums;pointer-events:none}
 div.alert-bar{cursor:default}
+
+/* ---- 재난 기록 카드 (새 시안) ---- */
+.rec-card{display:flex;gap:14px;padding:18px 18px 16px;background:#fff;border:1px solid #eceff3;border-radius:18px;box-shadow:0 3px 12px #112b4110;margin-bottom:12px;color:inherit;text-decoration:none}
+.rec-card:active{transform:scale(.995)}
+.rec-icon{width:44px;height:44px;flex:none;border-radius:12px;display:grid;place-items:center;background:#fdecea}
+.rec-icon.rain{background:#e9f1ff}
+.rec-icon svg{width:22px;height:22px}
+.rec-main{flex:1;min-width:0}
+.rec-top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+.rec-title{font-size:16px;font-weight:800;line-height:1.35;color:#152535}
+.rec-date{font-size:12px;color:#7b8794;margin-top:3px;font-variant-numeric:tabular-nums}
+.rec-pill{flex:none;font-size:11px;font-weight:750;padding:5px 9px;border-radius:999px;background:#eef0f3;color:#536174;white-space:nowrap}
+.rec-pill.now{background:#fde8e7;color:#c0392b}
+.rec-pill.done{background:#e6f4ec;color:#1e7a4f}
+.rec-msg{margin-top:12px;background:#f4f6f8;border-radius:12px;padding:11px 13px;font-size:13.5px;line-height:1.55;color:#33475b}
+.rec-meta{font-size:11.5px;color:#8a97a5;margin-top:7px}
+.rec-btn{display:inline-block;margin-top:12px;background:#4a67e3;color:#fff;font-size:13px;font-weight:750;padding:9px 14px;border-radius:10px}
