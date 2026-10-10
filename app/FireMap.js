@@ -4,6 +4,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useMyPosition } from "./LocationContext";
+import { distanceKm } from "../lib/geo";
 
 // 카카오 지도 프로그램을 한 번만 불러오기
 let loadingPromise = null;
@@ -99,6 +100,26 @@ export default function FireMap({ location, wind, height, settled = true }) {
       const dot = document.createElement("div");
       dot.className = "person-marker" + (position.source === "place" ? " demo" : "");
       add(new kakao.maps.CustomOverlay({ position: me, content: dot, yAnchor: 0.5, zIndex: 8 }));
+
+      // 내 위치와 화재를 잇는 점선 + 가운데 거리 표시
+      add(new kakao.maps.Polyline({
+        path: [me, fire],
+        strokeWeight: 5,
+        strokeColor: "#ff0000",
+        strokeOpacity: 0.75,
+        strokeStyle: "shortdash",
+        zIndex: 3,
+      }));
+      const km = distanceKm(position, location);
+      const pill = document.createElement("div");
+      pill.className = "distance-pill";
+      pill.textContent = `${km.toFixed(1)} km`;
+      add(new kakao.maps.CustomOverlay({
+        position: new kakao.maps.LatLng((position.lat + location.lat) / 2, (position.lon + location.lon) / 2),
+        content: pill,
+        yAnchor: 0.5,
+        zIndex: 6,
+      }));
       const bounds = new kakao.maps.LatLngBounds();
       bounds.extend(fire);
       bounds.extend(me);
