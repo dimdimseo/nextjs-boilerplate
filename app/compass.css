@@ -405,3 +405,11 @@ select{font:inherit}
 .headline.done{color:#617184}.headline.done .chip{background:#9aa3ad}
 .fire-label-area{color:#8a5a00}
 a.alert-bar{color:inherit;text-decoration:none}
+
+/* ---- 시트 스크롤 개선: 요약+탭 내용을 함께 스크롤, 탭 버튼은 위에 고정 ---- */
+.sheet{height:min(calc(100dvh - 65px - 78px - env(safe-area-inset-top)),820px);max-height:none}
+.sheet-scroll{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+.sheet-scroll .sheet-detail{flex:none;overflow:visible;min-height:0}
+.sheet-scroll .detail-tabs{position:sticky;top:0;z-index:3}
+/* 내용이 짧은 탭도 탭 버튼을 맨 위로 올릴 수 있게 최소 높이 */
+.sheet-scroll .detail-panel{min-height:calc(100dvh - 65px - 78px - 120px)}

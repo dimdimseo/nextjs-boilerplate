@@ -21,6 +21,8 @@ export default function FireScreen(props) {
   const sheetRef = useRef(null);
   const handleRef = useRef(null);
   const summaryRef = useRef(null);
+  const scrollRef = useRef(null); // 요약+탭 내용을 함께 스크롤하는 영역
+  const tabsRef = useRef(null);
   const drag = useRef(null);
   const [offset, setOffset] = useState(0);
   const [animate, setAnimate] = useState(false);
@@ -85,8 +87,25 @@ export default function FireScreen(props) {
   const enough = vh - visible > 300;
   const floatStyle = { bottom: `${visible + 80}px`, opacity: enough ? 1 : 0, pointerEvents: enough ? "auto" : "none" };
 
-  // ----- 요약 -----
+  // ----- 탭 -----
   const [tab, setTab] = useState("guide");
+  function openTab(id) {
+    setTab(id);
+    if (offset > 0) {
+      moveSheet(0); // 덜 올라와 있으면 끝까지 펼치기
+      setSettled(true);
+    }
+    // 새 탭은 항상 맨 위부터 (탭 버튼이 시트 맨 위에 오도록)
+    requestAnimationFrame(() => {
+      const sc = scrollRef.current;
+      const tabs = tabsRef.current;
+      if (!sc || !tabs) return;
+      const top = tabs.getBoundingClientRect().top - sc.getBoundingClientRect().top + sc.scrollTop;
+      sc.scrollTo({ top, behavior: "smooth" });
+    });
+  }
+
+  // ----- 요약 -----
   const g = buildGuidance({ actions, hazards, location, position, wind });
   const r = g.relation;
   const alert = g.items.find((i) => i.tone === "alert");
@@ -193,6 +212,7 @@ export default function FireScreen(props) {
           onKeyDown={onKeyDown}
         />
 
+        <div ref={scrollRef} className="sheet-scroll">
         <div ref={summaryRef} className="sheet-summary">
           <div className={`headline${done ? " done" : ""}`}>
             <i className="chip" />
@@ -217,7 +237,7 @@ export default function FireScreen(props) {
         </div>
 
         <div className="sheet-detail">
-          <div className="detail-tabs" role="tablist" aria-label="재난 상세 정보 선택">
+          <div ref={tabsRef} className="detail-tabs" role="tablist" aria-label="재난 상세 정보 선택">
             {[
               ["guide", "행동 안내"],
               ["message", "재난문자"],
@@ -229,7 +249,7 @@ export default function FireScreen(props) {
                 role="tab"
                 aria-selected={tab === id}
                 className={`detail-tab${tab === id ? " active" : ""}`}
-                onClick={() => setTab(id)}
+                onClick={() => openTab(id)}
               >
                 {label}
               </button>
@@ -247,6 +267,7 @@ export default function FireScreen(props) {
             )}
           </div>
           {footer}
+        </div>
         </div>
       </section>
     </>
