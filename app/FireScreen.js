@@ -89,21 +89,31 @@ export default function FireScreen(props) {
 
   // ----- 탭 -----
   const [tab, setTab] = useState("guide");
+  const tabChanged = useRef(false);
   function openTab(id) {
+    if (id === tab) return;
+    tabChanged.current = true;
     setTab(id);
     if (offset > 0) {
       moveSheet(0); // 덜 올라와 있으면 끝까지 펼치기
       setSettled(true);
     }
-    // 새 탭은 항상 맨 위부터 (탭 버튼이 시트 맨 위에 오도록)
-    requestAnimationFrame(() => {
-      const sc = scrollRef.current;
-      const tabs = tabsRef.current;
-      if (!sc || !tabs) return;
-      const top = tabs.getBoundingClientRect().top - sc.getBoundingClientRect().top + sc.scrollTop;
-      sc.scrollTo({ top, behavior: "smooth" });
-    });
   }
+
+  // 새 탭 내용이 다 그려진 다음, 항상 그 탭의 맨 처음(탭 버튼 바로 아래)부터 보이게
+  useLayoutEffect(() => {
+    if (!tabChanged.current) return;
+    tabChanged.current = false;
+    const sc = scrollRef.current;
+    const tabs = tabsRef.current;
+    if (!sc || !tabs) return;
+    const detail = tabs.parentElement; // .sheet-detail (탭 버튼과 탭 내용을 담은 영역)
+    if (detail.scrollTop) detail.scrollTop = 0; // 예전 스타일 파일처럼 상세 영역이 따로 스크롤되는 경우 대비
+    // 탭 버튼은 맨 위에 붙어 있어서(고정) 위치를 재면 항상 맨 위로 나와요.
+    // 그래서 움직이지 않는 상세 영역의 시작 위치를 기준으로 계산해요.
+    const top = detail.getBoundingClientRect().top - sc.getBoundingClientRect().top + sc.scrollTop;
+    if (sc.scrollTop > top) sc.scrollTop = top; // 내려가 있으면 새 탭의 맨 처음으로
+  }, [tab]);
 
   // ----- 요약 -----
   const g = buildGuidance({ actions, hazards, location, position, wind });
