@@ -16,6 +16,7 @@ export default function RelationTable({ location, wind, stale }) {
     ["화재 위치 기준", location ? (location.precision === "area" ? `${location.label} 일대 (번지 미확인)` : location.precision === "facility" ? `${location.label} (시설 위치)` : `${location.label}`) : "위치 미확인"],
     ["관측 풍향·풍속", windOk ? (wind.isCalm ? `바람 거의 없음 · ${wind.speed} m/s` : `${wind.windFromName}풍 · ${wind.speed} m/s`) : "—"],
     ["바람이 향하는 방향", windOk && !wind.isCalm ? `${wind.smokeToName}쪽 (풍향 기준)` : "—"],
+    ["관측 기준", windOk ? (wind.source === "aws" ? `${wind.stationName} 관측소 · ${wind.observedAt}` : `기상청 격자 · ${wind.observedAt}`) : "—"],
   ];
 
   return (
@@ -28,7 +29,9 @@ export default function RelationTable({ location, wind, stale }) {
         </div>
       ))}
       <div className="caution">
-        풍향은 화재 지점 부근 기상청 격자의 현재 관측값입니다{windOk ? ` (${wind.observedAt} 관측)` : ""}.
+        {windOk && wind.source === "aws"
+          ? `풍향은 화재에서 ${wind.stationKm}km 떨어진 기상청 ${wind.stationName} 자동기상관측소의 10분 평균값입니다 (${wind.observedAt} 관측).`
+          : `풍향은 화재 지점 부근 기상청 격자의 현재 관측값입니다${windOk ? ` (${wind.observedAt} 관측)` : ""}.`}
         {stale ? " 과거 화재 당시 연기 확산이나 내 위치의 위험도를 재현하지 않습니다." : " 바람은 바뀔 수 있어요."}
       </div>
     </>
