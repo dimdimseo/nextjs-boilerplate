@@ -3,7 +3,7 @@
 // from이 없으면 최근 3일에서 찾아요 (진행 중 화재).
 
 import { cache } from "react";
-import { loadIncidents, findIncident } from "../../../lib/loadIncidents";
+import { loadIncidents, findIncident, withPlace } from "../../../lib/loadIncidents";
 import { RECENT_DAYS } from "../../../lib/config";
 import { isCurrent } from "../../../lib/incidents";
 import { addDaysYmd, recentStart } from "../../../lib/dates";
@@ -17,8 +17,10 @@ const getData = cache(async (id, from) => {
   const valid = /^\d{8}$/.test(from ?? "");
   const start = valid ? from : recentStart(RECENT_DAYS);
   const end = valid ? addDaysYmd(from, 3) : null;
-  const { incidents } = await loadIncidents(start, end);
-  return { incident: findIncident(incidents, id) };
+  // 같은 기간의 화재 목록은 가볍게(좌표·바람 없이) 받고, 보고 있는 화재 하나에만 좌표·바람을 붙여요
+  const { incidents, snapshot } = await loadIncidents(start, end, false);
+  const found = findIncident(incidents, id);
+  return { incident: found ? await withPlace(found) : null, snapshot };
 });
 
 // 카카오톡 등으로 공유할 때 미리보기 제목과 설명
@@ -61,5 +63,5 @@ export default async function FirePage({ params, searchParams }) {
     );
   }
 
-  return <FireView incident={data.incident} stale={!isCurrent(data.incident)} />;
+  return <FireView incident={data.incident} stale={!isCurrent(data.incident)} snapshot={data.snapshot} />;
 }

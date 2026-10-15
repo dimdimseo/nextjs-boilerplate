@@ -17,8 +17,11 @@ export const maxDuration = 60;
 export default async function Home() {
   let current = [];
   let error = null;
+  let snapshot = null;
   try {
-    const { incidents } = await loadIncidents(recentStart(RECENT_DAYS), null, false);
+    const loaded = await loadIncidents(recentStart(RECENT_DAYS), null, false);
+    const incidents = loaded.incidents;
+    snapshot = loaded.snapshot;
     current = incidents.filter((inc) => isCurrent(inc));
   } catch (e) {
     error = e.message;
@@ -33,6 +36,11 @@ export default async function Home() {
       <div className="records-title">지금 양주시</div>
       <div className="records-sub">최근 24시간 안에 발송된 양주시 화재 재난문자를 확인해요.</div>
 
+      {snapshot && (
+        <div className="snapshot-strip" style={{ marginBottom: "12px" }}>
+          재난문자 서버에 연결할 수 없어 실시간 확인이 어려워요. 지난 화재는 아래 재난 기록에서 볼 수 있어요.
+        </div>
+      )}
       {error && <div className="empty-card">정보를 불러오지 못했어요. ({error})</div>}
 
       {!error && current.length === 0 && (

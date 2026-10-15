@@ -13,7 +13,7 @@ function dotDate(date, time) {
   return time ? `${d} ${time}` : d;
 }
 
-export default function FireView({ incident, stale }) {
+export default function FireView({ incident, stale, snapshot = null }) {
   const latest = incident.latest;
   const first = incident.earlier.length ? incident.earlier[incident.earlier.length - 1] : latest;
   const actions = latest.analysis?.actions ?? [];
@@ -87,6 +87,7 @@ export default function FireView({ incident, stale }) {
         placeText={placeText}
         timeText={timeText}
         stale={stale}
+        snapshot={snapshot}
         done={incident.status === "완진"}
         actions={actions}
         hazards={incident.hazards}

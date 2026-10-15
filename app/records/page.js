@@ -41,9 +41,10 @@ export default async function Records({ searchParams }) {
   let fires = [];
   let incidents = [];
   let error = null;
+  let snapshot = null;
   if (start <= today) {
     try {
-      ({ fires, incidents } = await loadIncidents(start, end, false));
+      ({ fires, incidents, snapshot } = await loadIncidents(start, end, false));
     } catch (e) {
       error = e.message;
     }
@@ -98,6 +99,11 @@ export default async function Records({ searchParams }) {
         {hasNext ? <Link href={`/records?y=${next.y}&m=${next.m}`}>{next.m}월 ›</Link> : <span />}
       </div>
 
+      {snapshot && (
+        <div className="snapshot-strip" style={{ marginBottom: "12px" }}>
+          재난문자 서버에 연결할 수 없어 저장해둔 공식 문자(2026년 8~9월 양주시 화재)로 보여주고 있어요.
+        </div>
+      )}
       {error && <div className="empty-card">정보를 불러오지 못했어요. ({error})</div>}
 
       {!error && (

@@ -13,7 +13,7 @@ import { PLACES } from "../lib/places";
 const NAV = 65; // 아래 탭바 높이
 
 export default function FireScreen(props) {
-  const { location, wind, placeText, timeText, stale, done, actions, hazards, modifier, messagePanel, factoryNode, footer } = props;
+  const { location, wind, placeText, timeText, stale, snapshot, done, actions, hazards, modifier, messagePanel, factoryNode, footer } = props;
   const { position, status, message, requestGps, choosePlace } = useMyPosition();
 
   // ----- 시트 위치 (팀원 버전과 같은 멈춤 지점) -----
@@ -239,6 +239,11 @@ export default function FireScreen(props) {
             {r.km !== null ? " · 직선거리" : ""}
           </div>
           {precision && <div className="sub-note">{precision}</div>}
+          {snapshot && (
+            <div className="snapshot-strip">
+              재난문자 서버에 연결할 수 없어 저장해둔 공식 문자로 보여주고 있어요. 서버가 복구되면 자동으로 실시간 정보로 돌아와요.
+            </div>
+          )}
           {alert && <div className="alert-strip">{alert.title}</div>}
           <div className="quick-guide">
             <div className="quick-label">내 위치 기준 · 먼저 확인할 사항</div>
